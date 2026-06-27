@@ -59,6 +59,78 @@ header p{color:var(--text2);margin-top:6px;font-size:15px}
 }
 .track-opt.melody label{font-weight:600;color:var(--purple)}
 
+/* MIDI-Player */
+#player-section{display:none}
+.player-controls{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.btn-play{
+  background:var(--purple);color:#fff;border:none;border-radius:8px;
+  padding:10px 20px;font-size:15px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:opacity .15s;min-width:80px;
+}
+.btn-play:hover{opacity:.85}
+.btn-play:disabled{opacity:.4;cursor:default}
+.btn-stop{
+  background:var(--bg2);color:var(--text);border:.5px solid var(--border);
+  border-radius:8px;padding:10px 16px;font-size:15px;cursor:pointer;font-family:inherit;
+}
+.btn-stop:hover{background:var(--bg)}
+.tempo-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);margin-left:auto}
+.tempo-wrap input[type=range]{width:100px;accent-color:var(--purple)}
+
+.practice-btn{
+  width:100%;padding:12px;border:2px solid var(--purple);color:var(--purple);
+  background:var(--purple-bg);border-radius:var(--r);font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .15s;margin-top:4px;
+}
+.practice-btn.active{background:var(--purple);color:#fff}
+.practice-btn:hover{opacity:.85}
+
+.track-row{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border:.5px solid var(--border);border-radius:8px;background:var(--bg);
+  margin-bottom:6px;
+}
+.track-row .track-name{font-size:14px;flex:1;font-weight:500}
+.track-row .track-info{font-size:12px;color:var(--text3)}
+.track-row .mute-btn,.track-row .solo-btn{
+  border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.track-row .mute-btn{background:var(--bg2);color:var(--text2)}
+.track-row .mute-btn.active{background:#993C1D;color:#fff}
+.track-row .solo-btn{background:var(--bg2);color:var(--text2)}
+.track-row .solo-btn.active{background:#3B6D11;color:#fff}
+.track-row input[type=range]{width:70px;accent-color:var(--purple)}
+.track-row.is-melody{border-color:var(--purple-border);background:var(--purple-bg)}
+.track-row.is-melody .track-name{color:var(--purple)}
+.player-progress{
+  width:100%;height:4px;background:var(--bg2);border-radius:2px;
+  margin-bottom:16px;overflow:hidden;
+}
+.player-progress-bar{height:100%;background:var(--purple);width:0%;transition:width .5s linear}
+.player-time{font-size:12px;color:var(--text3);text-align:right;margin-top:4px;margin-bottom:16px}
+.no-webmidi{
+  background:var(--bg2);border-radius:8px;padding:14px 16px;
+  font-size:13px;color:var(--text2);text-align:center;
+}
+
+/* Audio & Audacity */
+#audio-section{display:none}
+.audio-actions{display:flex;flex-direction:column;gap:10px}
+.audio-btn{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;
+  border:.5px solid var(--border);border-radius:var(--r);background:var(--bg);
+  cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;color:var(--text);
+  transition:background .12s;text-align:left;width:100%;border-style:solid;
+}
+.audio-btn:hover{background:var(--bg2)}
+.audio-btn .icon{font-size:24px;min-width:32px;text-align:center}
+.audio-btn .desc{font-size:12px;color:var(--text3);font-weight:400}
+.audio-btn.primary{border-color:var(--purple-border);background:var(--purple-bg)}
+.audio-btn.primary .icon,.audio-btn.primary .label{color:var(--purple)}
+#mp3-player{margin-top:12px;display:none}
+#mp3-player audio{width:100%;border-radius:8px}
+
 #btn-convert{
   width:100%;padding:13px;background:var(--purple);color:#fff;
   border:none;border-radius:var(--r);font-size:15px;font-weight:600;
@@ -116,6 +188,53 @@ footer{margin-top:auto;padding-top:40px;font-size:12px;color:var(--text3);text-a
   <button id="btn-convert" disabled>⏳ Lade Datei...</button>
 </div>
 
+<!-- MIDI-Player -->
+<div class="card" id="player-section">
+  <h2>MIDI-Player</h2>
+  <div id="player-body">
+    <div class="player-controls">
+      <button class="btn-play" id="btn-play" onclick="playerPlay()">▶ Abspielen</button>
+      <button class="btn-stop" onclick="playerStop()">■ Stop</button>
+      <div class="tempo-wrap">
+        <span>Tempo</span>
+        <input type="range" id="tempo-range" min="40" max="200" value="100" oninput="tempoChange(this.value)">
+        <span id="tempo-label">100%</span>
+      </div>
+    </div>
+    <div class="player-progress"><div class="player-progress-bar" id="progress-bar"></div></div>
+    <div class="player-time" id="player-time">0:00 / 0:00</div>
+    <div id="player-tracks"></div>
+    <button class="practice-btn" id="practice-btn" onclick="togglePractice()">
+      🎷 Üben-Modus — Melodie stummschalten
+    </button>
+    <div class="no-webmidi" id="no-webmidi" style="display:none">
+      Web MIDI nicht verfügbar. Bitte Chrome verwenden und unter<br>
+      <code>chrome://flags/#enable-web-midi</code> aktivieren.
+    </div>
+  </div>
+</div>
+
+<!-- Audio & Audacity -->
+<div class="card" id="audio-section">
+  <h2>Audio &amp; Bearbeitung</h2>
+  <div class="audio-actions">
+    <button class="audio-btn primary" onclick="exportMp3()">
+      <span class="icon">🎵</span>
+      <div><div class="label">Als MP3 exportieren</div><div class="desc">MuseScore 4 rendert alle Instrumente mit originalem Klang</div></div>
+    </button>
+    <button class="audio-btn" id="btn-audacity" onclick="openAudacity()">
+      <span class="icon">🎚</span>
+      <div><div class="label">In Audacity öffnen</div><div class="desc">MP3 direkt in Audacity laden — schneiden, samplen, bearbeiten</div></div>
+    </button>
+  </div>
+  <div id="mp3-player">
+    <audio controls id="audio-elem"></audio>
+    <div style="font-size:12px;color:var(--text3);margin-top:6px;text-align:right">
+      <a id="mp3-download" href="#" download style="color:var(--purple)">⬇ MP3 herunterladen</a>
+    </div>
+  </div>
+</div>
+
 <!-- Ergebnisse -->
 <div class="card" id="results">
   <h2>Fertig — Notenblätter herunterladen</h2>
@@ -125,9 +244,308 @@ footer{margin-top:auto;padding-top:40px;font-size:12px;color:var(--text3);text-a
 
 <footer>FREDDY Music Intelligence System &nbsp;·&nbsp; Für Freddy ❤️</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
 <script>
 const API = 'http://localhost:7432';
 let currentStem = null;
+
+// ── MIDI-Player State ─────────────────────────────────────────────────────
+const player = {
+  midi: null, synths: [], parts: [], muted: [], volumes: [],
+  playing: false, practiceMode: false, bpm: 120, tempoFactor: 1.0,
+  duration: 0, startTime: 0, pauseOffset: 0, rafId: null,
+  midiOutput: null, midiAccess: null, scheduledMsgs: [], timeouts: [],
+};
+
+const GM_NAMES = [
+  'Akustikgitarre','E-Gitarre','E-Bass','Streichquartett','Flöte','Oboe',
+  'Klarinette','Fagott','Trompete','Horn','Posaune','Tuba','Saxophon',
+  'Klavier','Orgel','Streicher','Chor','Synthesizer','Schlagzeug'
+];
+
+function gmName(prog) {
+  if (prog === 128) return 'Schlagzeug';
+  const names = {
+    0:'Klavier',1:'Klavier',4:'E-Piano',6:'Cembalo',
+    24:'Gitarre (akust.)',25:'Gitarre (steel)',26:'E-Gitarre (Jazz)',
+    30:'E-Gitarre (verz.)',32:'E-Bass (Finger)',33:'E-Bass (Pick)',
+    40:'Violine',41:'Viola',42:'Cello',43:'Kontrabass',
+    44:'Streicher (Tremolo)',48:'Streicher',49:'Streicher (langsam)',
+    56:'Trompete',57:'Posaune',58:'Tuba',60:'Horn',
+    64:'Sopransaxophon',65:'Altsaxophon',66:'Tenorsaxophon',67:'Baritonsaxophon',
+    68:'Oboe',69:'Englischhorn',70:'Fagott',71:'Klarinette',
+    72:'Piccolo',73:'Flöte',74:'Blockflöte',
+    80:'Synthklang',88:'Pad',104:'Sitar',
+  };
+  return names[prog] || `Instrument ${prog+1}`;
+}
+
+async function initMidiPlayer(stem) {
+  document.getElementById('player-section').style.display = 'block';
+  document.getElementById('audio-section').style.display = 'block';
+  try {
+    const resp = await fetch(`${API}/api/midi/raw/${stem}`);
+    if (!resp.ok) throw new Error('MIDI-Datei nicht gefunden');
+    const buf = await resp.arrayBuffer();
+    player.midi = new Midi(buf);
+    player.bpm = player.midi.header.tempos[0]?.bpm || 120;
+    player.duration = player.midi.duration;
+    buildPlayerTracks();
+    await initWebMidi();
+    updatePlayerTime(0);
+  } catch(e) {
+    console.warn('MIDI-Player:', e);
+  }
+}
+
+function buildPlayerTracks() {
+  const container = document.getElementById('player-tracks');
+  container.innerHTML = '';
+  player.muted = [];
+  player.volumes = [];
+  const tracks = player.midi.tracks.filter(t => t.notes.length > 0);
+  tracks.forEach((track, i) => {
+    const prog = track.instrument?.number ?? 0;
+    const isDrum = track.instrument?.percussion || false;
+    const instrName = isDrum ? 'Schlagzeug' : gmName(prog);
+    const name = track.name || instrName;
+    const isMelody = i === 0 && !isDrum;
+    player.muted.push(false);
+    player.volumes.push(100);
+
+    const row = document.createElement('div');
+    row.className = 'track-row' + (isMelody ? ' is-melody' : '');
+    row.innerHTML = `
+      <div>
+        <div class="track-name">${isMelody ? '🎷 ' : ''}${name}</div>
+        <div class="track-info">${instrName}${track.notes.length ? ' · ' + track.notes.length + ' Noten' : ''}</div>
+      </div>
+      <input type="range" min="0" max="127" value="100" title="Lautstärke"
+        oninput="setTrackVolume(${i}, this.value)">
+      <button class="mute-btn" id="mute-${i}" onclick="toggleMute(${i})">Stumm</button>
+      <button class="solo-btn" id="solo-${i}" onclick="toggleSolo(${i})">Solo</button>
+    `;
+    container.appendChild(row);
+  });
+  player.tracks = tracks;
+}
+
+async function initWebMidi() {
+  try {
+    player.midiAccess = await navigator.requestMIDIAccess();
+    const outputs = [...player.midiAccess.outputs.values()];
+    player.midiOutput = outputs[0] || null;
+    if (!player.midiOutput) throw new Error('Kein MIDI-Ausgang');
+    document.getElementById('no-webmidi').style.display = 'none';
+    document.getElementById('btn-play').disabled = false;
+  } catch(e) {
+    document.getElementById('no-webmidi').style.display = 'block';
+    document.getElementById('btn-play').disabled = true;
+  }
+}
+
+function playerPlay() {
+  if (!player.midi || !player.midiOutput) return;
+  if (player.playing) { playerPause(); return; }
+  player.playing = true;
+  document.getElementById('btn-play').textContent = '⏸ Pause';
+
+  const out = player.midiOutput;
+  const tf = player.tempoFactor;
+  const startAt = performance.now() - player.pauseOffset * 1000 / tf;
+  player.startTime = startAt;
+
+  // Alle alten Timeouts löschen
+  player.timeouts.forEach(clearTimeout);
+  player.timeouts = [];
+
+  player.tracks.forEach((track, i) => {
+    track.notes.forEach(note => {
+      const t = (note.time / tf) * 1000;
+      const dur = (note.duration / tf) * 1000;
+      const ch = track.channel ?? i;
+
+      if (t < player.pauseOffset * 1000 / tf) return; // bereits gespielt
+
+      const onId = setTimeout(() => {
+        if (!player.muted[i]) {
+          const vel = Math.round(note.velocity * 127 * (player.volumes[i] / 127));
+          out.send([0x90 | (ch & 0xF), note.midi, Math.max(1, Math.min(127, vel))]);
+        }
+      }, t - player.pauseOffset * 1000 / tf);
+
+      const offId = setTimeout(() => {
+        out.send([0x80 | (ch & 0xF), note.midi, 0]);
+      }, t + dur - player.pauseOffset * 1000 / tf);
+
+      player.timeouts.push(onId, offId);
+    });
+  });
+
+  // Ende-Timer
+  const endId = setTimeout(() => playerStop(), (player.duration / tf - player.pauseOffset) * 1000 + 500);
+  player.timeouts.push(endId);
+
+  // Fortschrittsanzeige
+  function tick() {
+    if (!player.playing) return;
+    const elapsed = (performance.now() - startAt) / 1000 * tf;
+    const pct = Math.min(100, elapsed / player.duration * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    updatePlayerTime(elapsed);
+    player.rafId = requestAnimationFrame(tick);
+  }
+  player.rafId = requestAnimationFrame(tick);
+}
+
+function playerPause() {
+  player.playing = false;
+  player.pauseOffset = (performance.now() - player.startTime) / 1000 * player.tempoFactor;
+  document.getElementById('btn-play').textContent = '▶ Fortsetzen';
+  player.timeouts.forEach(clearTimeout);
+  player.timeouts = [];
+  cancelAnimationFrame(player.rafId);
+  allNotesOff();
+}
+
+function playerStop() {
+  player.playing = false;
+  player.pauseOffset = 0;
+  document.getElementById('btn-play').textContent = '▶ Abspielen';
+  document.getElementById('progress-bar').style.width = '0%';
+  player.timeouts.forEach(clearTimeout);
+  player.timeouts = [];
+  cancelAnimationFrame(player.rafId);
+  allNotesOff();
+  updatePlayerTime(0);
+}
+
+function allNotesOff() {
+  if (!player.midiOutput) return;
+  for (let ch = 0; ch < 16; ch++) {
+    player.midiOutput.send([0xB0 | ch, 123, 0]); // All Notes Off
+  }
+}
+
+function tempoChange(val) {
+  player.tempoFactor = val / 100;
+  document.getElementById('tempo-label').textContent = val + '%';
+  if (player.playing) { playerPause(); playerPlay(); }
+}
+
+function toggleMute(i) {
+  player.muted[i] = !player.muted[i];
+  const btn = document.getElementById(`mute-${i}`);
+  btn.classList.toggle('active', player.muted[i]);
+  if (player.muted[i] && player.playing) {
+    const ch = player.tracks[i].channel ?? i;
+    player.midiOutput?.send([0xB0 | (ch & 0xF), 123, 0]);
+  }
+}
+
+function toggleSolo(i) {
+  const wasActive = document.getElementById(`solo-${i}`).classList.contains('active');
+  // Solo aufheben → alle wieder an
+  player.tracks.forEach((_, j) => {
+    player.muted[j] = false;
+    document.getElementById(`mute-${j}`)?.classList.remove('active');
+    document.getElementById(`solo-${j}`)?.classList.remove('active');
+  });
+  if (!wasActive) {
+    // Solo aktivieren → alle außer i stummschalten
+    player.tracks.forEach((_, j) => {
+      if (j !== i) { player.muted[j] = true; document.getElementById(`mute-${j}`)?.classList.add('active'); }
+    });
+    document.getElementById(`solo-${i}`).classList.add('active');
+  }
+  if (player.playing) allNotesOff();
+}
+
+function setTrackVolume(i, val) {
+  player.volumes[i] = parseInt(val);
+}
+
+function togglePractice() {
+  player.practiceMode = !player.practiceMode;
+  const btn = document.getElementById('practice-btn');
+  btn.classList.toggle('active', player.practiceMode);
+  if (player.practiceMode) {
+    btn.textContent = '🎷 Üben-Modus aktiv — Melodie ist stumm';
+    // Spur 0 stummschalten (Melodie / erste Spur)
+    if (player.tracks.length > 0) { player.muted[0] = true; document.getElementById('mute-0')?.classList.add('active'); }
+  } else {
+    btn.textContent = '🎷 Üben-Modus — Melodie stummschalten';
+    player.muted[0] = false;
+    document.getElementById('mute-0')?.classList.remove('active');
+  }
+  if (player.playing) allNotesOff();
+}
+
+function updatePlayerTime(elapsed) {
+  const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  document.getElementById('player-time').textContent =
+    `${fmt(Math.min(elapsed, player.duration))} / ${fmt(player.duration)}`;
+}
+
+// ── MP3-Export & Audacity ──────────────────────────────────────────────────
+let currentMp3Url = null;
+
+async function exportMp3() {
+  if (!currentStem) return;
+  const btn = event.currentTarget;
+  btn.querySelector('.label').textContent = '⏳ MuseScore rendert MP3…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/api/midi/audio`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({stem: currentStem})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    currentMp3Url = `${API}${data.url}`;
+    const mp3Block = document.getElementById('mp3-player');
+    const audio = document.getElementById('audio-elem');
+    const dl = document.getElementById('mp3-download');
+    audio.src = currentMp3Url;
+    dl.href = currentMp3Url;
+    dl.download = data.filename || 'freddy_audio.mp3';
+    mp3Block.style.display = 'block';
+    btn.querySelector('.label').textContent = '✅ MP3 bereit';
+  } catch(e) {
+    btn.querySelector('.label').textContent = 'Fehler: ' + e.message;
+    setTimeout(() => { btn.querySelector('.label').textContent = 'Als MP3 exportieren'; btn.disabled = false; }, 3000);
+    return;
+  }
+  btn.disabled = false;
+}
+
+async function openAudacity() {
+  if (!currentStem) return;
+  const btn = document.getElementById('btn-audacity');
+  const label = btn.querySelector('.label');
+  if (!currentMp3Url) {
+    label.textContent = '⏳ Exportiere MP3 für Audacity…';
+    btn.disabled = true;
+    await exportMp3();
+    btn.disabled = false;
+  }
+  label.textContent = '⏳ Öffne Audacity…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/api/audacity/open`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({stem: currentStem})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    label.textContent = '✅ Audacity geöffnet';
+  } catch(e) {
+    label.textContent = 'Fehler: ' + e.message;
+  }
+  setTimeout(() => { label.textContent = 'In Audacity öffnen'; btn.disabled = false; }, 3000);
+}
 
 // Drag & Drop
 const drop = document.getElementById('drop');
@@ -163,6 +581,8 @@ async function handleFile(file) {
     const song = Array.isArray(data) ? data[0] : data;
     if (song.error) throw new Error(song.error);
     currentStem = song.stem;
+    currentMp3Url = null;
+    document.getElementById('mp3-player').style.display = 'none';
 
     // Spurliste aufbauen (aus track_names oder Channels)
     buildTrackList(song);
@@ -170,6 +590,10 @@ async function handleFile(file) {
     hideStatus();
     document.getElementById('btn-convert').disabled = false;
     document.getElementById('btn-convert').textContent = '🎼 Notenblätter erstellen';
+
+    // MIDI-Player & Audio-Sektion initialisieren
+    playerStop();
+    initMidiPlayer(currentStem);
   } catch(err) {
     setStatus('err', 'Fehler: ' + err.message);
     drop.querySelector('p').innerHTML = 'Datei hierher ziehen oder <strong>hier klicken</strong>';

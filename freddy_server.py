@@ -85,6 +85,15 @@ MUSESCORE_EXE = next((p for p in MUSESCORE_CANDIDATES if p.exists()), None)
 MUSESCORE_OK  = MUSESCORE_EXE is not None
 print(f"[FREDDY] MuseScore 4 : {'OK: ' + str(MUSESCORE_EXE) if MUSESCORE_OK else 'nicht gefunden (Fallback: FREDDYnote)'}")
 
+# Audacity
+AUDACITY_CANDIDATES = [
+    Path(r"C:\Program Files\Audacity\Audacity.exe"),
+    Path(r"C:\Program Files (x86)\Audacity\Audacity.exe"),
+]
+AUDACITY_EXE = next((p for p in AUDACITY_CANDIDATES if p.exists()), None)
+AUDACITY_OK  = AUDACITY_EXE is not None
+print(f"[FREDDY] Audacity    : {'OK: ' + str(AUDACITY_EXE) if AUDACITY_OK else 'nicht gefunden'}")
+
 # Engine 3: FREDDYtext
 sys.path.insert(0, str(ENGINES / "freddytext"))
 try:
@@ -198,7 +207,7 @@ def api_status(_p):
         except: result[t] = 0
     conn.close()
     result.update(midi_engine=MIDI_OK, note_engine=NOTE_OK, musescore=MUSESCORE_OK,
-                  text_engine=TEXT_OK, scan_engine=SCAN_OK,
+                  audacity=AUDACITY_OK, text_engine=TEXT_OK, scan_engine=SCAN_OK,
                   songs_count=len(list(JOBS_DIR.iterdir())) if JOBS_DIR.exists() else 0)
     return result
 
@@ -521,6 +530,54 @@ def handle_note_batch(stems):
         "songs":     all_songs(),
     }
 
+def api_midi_raw(stem):
+    """Liefert den Pfad zur rohen MIDI-Datei eines Songs."""
+    d = JOBS_DIR / stem / "midi"
+    if not d.exists(): return None
+    return next(d.glob("*.mid"), None) or next(d.glob("*.MID"), None) or next(d.glob("*.midi"), None)
+
+def api_midi_audio(stem):
+    """MuseScore: MIDI -> MP3 exportieren. Gibt URL zurueck."""
+    if not MUSESCORE_OK:
+        return {"error": "MuseScore 4 nicht verfuegbar"}
+    midi = api_midi_raw(stem)
+    if not midi:
+        return {"error": "Keine MIDI-Datei gefunden. Datei zuerst hochladen."}
+    out_dir = JOBS_DIR / stem / "notation"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem_name = midi.stem
+    out_mp3 = out_dir / (stem_name + ".mp3")
+    if not out_mp3.exists():
+        try:
+            _sub.run([str(MUSESCORE_EXE), "-o", str(out_mp3), str(midi)],
+                     capture_output=True, timeout=120)
+        except Exception as e:
+            return {"error": f"MuseScore-Fehler: {e}"}
+    if out_mp3.exists():
+        return {"status": "ok", "url": f"/songs/{stem}/notation/{out_mp3.name}", "filename": out_mp3.name}
+    return {"error": "MP3-Datei wurde nicht erstellt"}
+
+def api_audacity_open(body_json):
+    """Oeffnet eine Audio-Datei in Audacity."""
+    if not AUDACITY_OK:
+        return {"error": "Audacity nicht gefunden unter: " + ", ".join(str(c) for c in AUDACITY_CANDIDATES)}
+    stem     = body_json.get("stem", "")
+    filename = body_json.get("filename", "")
+    if stem and filename:
+        f = JOBS_DIR / stem / "notation" / filename
+    elif stem:
+        d = JOBS_DIR / stem / "notation"
+        f = next(d.glob("*.mp3"), None) or next(d.glob("*.wav"), None) if d.exists() else None
+    else:
+        return {"error": "stem erforderlich"}
+    if not f or not f.exists():
+        return {"error": "Audio-Datei nicht gefunden. Zuerst als MP3 exportieren."}
+    try:
+        _sub.Popen([str(AUDACITY_EXE), str(f)])
+        return {"status": "gestartet", "file": f.name}
+    except Exception as e:
+        return {"error": f"Audacity konnte nicht gestartet werden: {e}"}
+
 def handle_primus_handoff(stem):
     d   = JOBS_DIR / stem
     xml = next(d.rglob("*.musicxml"), None)
@@ -605,7 +662,8 @@ class FREDDYHandler(http.server.BaseHTTPRequestHandler):
             "/api/nodes":      lambda: api_nodes(params),
             "/api/chains":     lambda: api_chains(params),
             "/api/search":     lambda: api_search(params),
-            "/api/midi/songs": lambda: api_songs_list(params),
+            "/api/midi/songs":  lambda: api_songs_list(params),
+        "/api/midi/audio":  lambda: api_midi_audio(params.get("stem",[""])[0]),
             "/debug": lambda: {"frozen":getattr(sys,"frozen",False),"_MEIPASS":str(getattr(sys,"_MEIPASS","N/A")),"exe":str(sys.executable),"_APP":str(_APP),"WEB_DIR":str(WEB_DIR),"WEB_exists":WEB_DIR.exists(),"HTML_bytes":len(_INDEX_HTML),"DB":str(DB_PATH),"DB_ok":DB_PATH.exists()},
         }
         if path in routes:
@@ -624,6 +682,12 @@ class FREDDYHandler(http.server.BaseHTTPRequestHandler):
         m = re.match(r"^/api/songs/([^/]+)/playback$", path)
         if m:
             return self.send_json(api_playback(m.group(1)))
+
+        m = re.match(r"^/api/midi/raw/([^/]+)$", path)
+        if m:
+            f = api_midi_raw(m.group(1))
+            if f and f.exists(): return serve_file(self, f)
+            return self.send_json({"error":"MIDI-Datei nicht gefunden"},404)
 
         m = re.match(r"^/songs/(.+)$", path)
         if m:
@@ -688,6 +752,15 @@ class FREDDYHandler(http.server.BaseHTTPRequestHandler):
             except: stem = ""
             if not stem: return self.send_json({"error":"stem fehlt"},400)
             return self.send_json(handle_primus_handoff(stem))
+        if path == "/api/midi/audio":
+            try:   stem = json.loads(body.decode()).get("stem","")
+            except: stem = ""
+            if not stem: return self.send_json({"error":"stem fehlt"},400)
+            return self.send_json(api_midi_audio(stem))
+        if path == "/api/audacity/open":
+            try:   bj = json.loads(body.decode())
+            except: bj = {}
+            return self.send_json(api_audacity_open(bj))
 
         self.send_json({"error":"Unbekannte Route"},404)
 
