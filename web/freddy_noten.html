@@ -576,7 +576,7 @@ async function handleFile(file) {
   form.append('file', file, file.name);
 
   try {
-    const res = await fetch(`${API}/api/midi/upload`, { method: 'POST', body: buildMultipart(file, await file.arrayBuffer()) });
+    const res = await fetch(`${API}/api/midi/upload`, { method: 'POST', body: form });
     const data = await res.json();
     const song = Array.isArray(data) ? data[0] : data;
     if (song.error) throw new Error(song.error);
