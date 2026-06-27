@@ -328,13 +328,19 @@ def api_playback(stem):
         return {"error": "notes_only.csv nicht gefunden. Zuerst konvertieren."}
     notes = []
     total_duration = 0.0
+    tracks_seen = {}   # track_name -> track_index
     with open(csv_path, encoding="utf-8") as f:
         for row in csv.DictReader(f):
             if row.get("is_drum","").lower() == "true": continue
             try:
+                track_name = row.get("track_name","") or row.get("track","") or "Spur 1"
+                if track_name not in tracks_seen:
+                    tracks_seen[track_name] = len(tracks_seen)
+                track_idx = tracks_seen[track_name]
                 note = {"pitch":int(row["note"]),"name":row.get("note_name",""),
                         "start":float(row["start_seconds"]),"duration":float(row["duration_seconds"]),
-                        "velocity":int(row.get("velocity",64)),"track":row.get("track_name","")}
+                        "velocity":int(row.get("velocity",64)),
+                        "track":track_name,"ti":track_idx}
                 notes.append(note)
                 if note["start"]+note["duration"] > total_duration:
                     total_duration = note["start"]+note["duration"]
@@ -350,8 +356,10 @@ def api_playback(stem):
             if ts: meta["time_signature"] = f"{ts[0].get('numerator',4)}/{ts[0].get('denominator',4)}"
             meta["track_names"] = m.get("track_names",{})
         except: pass
+    # Tracks als Liste mit Index
+    tracks_list = [{"name": n, "idx": i} for n, i in tracks_seen.items()]
     return {"stem":stem,"notes":notes,"total_duration":round(total_duration+0.5,2),
-            "note_count":len(notes),**meta}
+            "note_count":len(notes),"tracks":tracks_list,**meta}
 
 # ══════════════════════════════════════════════════════
 # 7. UPLOAD / KONVERTIERUNG
@@ -697,7 +705,11 @@ class FREDDYHandler(http.server.BaseHTTPRequestHandler):
 
         # Statische Dateien
         if path in ("/", "/index.html"):
-            # Primär: eingebettetes HTML (immer verfügbar in der .exe)
+            # Bevorzuge web/index.html von Disk (einfacher zu aktualisieren)
+            disk_html = WEB_DIR / "index.html"
+            if disk_html.exists():
+                return serve_file(self, disk_html)
+            # Fallback: eingebettetes HTML
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(_INDEX_HTML)))
@@ -805,18 +817,13 @@ if __name__ == "__main__":
     print("=" * 56)
 
     threading.Thread(target=open_browser, daemon=True).start()
-    socketserver.TCPServer.allow_reuse_address = True
 
-    # Port 7432 befreien falls belegt
-    try:
-        import socket as _sock
-        _s = _sock.socket()
-        _s.setsockopt(_sock.SOL_SOCKET, _sock.SO_REUSEADDR, 1)
-        _s.close()
-    except: pass
+    class _ThreadedServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+        allow_reuse_address = True
+        daemon_threads = True   # Worker-Threads sterben mit dem Hauptprozess
 
     try:
-        with socketserver.TCPServer(("", PORT), FREDDYHandler) as httpd:
+        with _ThreadedServer(("", PORT), FREDDYHandler) as httpd:
             try:
                 httpd.serve_forever()
             except KeyboardInterrupt:

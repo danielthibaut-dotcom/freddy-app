@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FREDDY — Music Intelligence System</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#534AB7;--purple-bg:#EEEDFE;
+  --teal:#0F6E56;--teal-bg:#E1F5EE;
+  --coral:#993C1D;--coral-bg:#FAECE7;
+  --blue:#185FA5;--blue-bg:#E6F1FB;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --green:#3B6D11;--green-bg:#EAF3DE;
+  --gray:#5F5E5A;--gray-bg:#F1EFE8;
+  --bg:#FAFAF8;--bg2:#F1EFE8;--bg3:#FFFFFF;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.18);
+  --text:#1A1A18;--text2:#5F5E5A;--text3:#9E9C96;
+  --r:8px;--rl:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1C1B18;--bg2:#252420;--bg3:#2E2D29;
+  --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.2);
+  --text:#F1EFE8;--text2:#B4B2A9;--text3:#7A7870;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;height:100vh;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh}
+#hdr{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--bg3);border-bottom:.5px solid var(--border);flex-shrink:0;z-index:10}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--purple-bg);border:1px solid rgba(83,74,183,.3);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--purple)}
+.logo-text h1{font-size:17px;font-weight:600;color:var(--text)}
+.logo-text p{font-size:11px;color:var(--text3)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.swrap{position:relative}
+.swrap input{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:6px 10px 6px 32px;font-size:13px;width:200px;color:var(--text);outline:none;font-family:inherit}
+.swrap input:focus{border-color:var(--purple)}
+.swrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+.lbtn{background:var(--bg2);border:.5px solid var(--border2);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);font-family:inherit}
+.lbtn.on{background:var(--purple-bg);color:var(--purple);border-color:rgba(83,74,183,.4)}
+#main{display:flex;flex:1;overflow:hidden}
+#sidebar{width:220px;background:var(--bg3);border-right:.5px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0}
+#content{flex:1;overflow-y:auto;padding:20px 24px;background:var(--bg)}
+#dp{width:380px;background:var(--bg3);border-left:.5px solid var(--border);overflow-y:auto;padding:16px;display:none;flex-shrink:0}
+#dp.open{display:block}
+.ns{padding:4px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-top:8px}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 14px;cursor:pointer;font-size:13px;color:var(--text2);user-select:none}
+.ni:hover{background:var(--bg2);color:var(--text)}
+.ni.on{background:var(--purple-bg);color:var(--purple);font-weight:500}
+.ni i{font-size:16px;flex-shrink:0}
+.nbadge{margin-left:auto;background:var(--bg2);color:var(--text3);font-size:10px;padding:1px 6px;border-radius:10px}
+.ni.on .nbadge{background:rgba(83,74,183,.15);color:var(--purple)}
+.pt{font-size:18px;font-weight:600;margin-bottom:4px;color:var(--text)}
+.ps{font-size:12px;color:var(--text3);margin-bottom:18px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.sc{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:12px 14px}
+.sc .l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:4px}
+.sc .v{font-size:22px;font-weight:600;color:var(--text)}
+.sc .s{font-size:11px;color:var(--text3);margin-top:2px}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.mcard{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:13px 14px;cursor:pointer}
+.mcard:hover{border-color:var(--border2)}
+.micon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:8px}
+.mtit{font-size:12px;font-weight:500;margin-bottom:4px;line-height:1.35;color:var(--text)}
+.mmeta{font-size:11px;color:var(--text3)}
+.bw{height:4px;background:var(--bg2);border-radius:2px;margin-top:8px;overflow:hidden}
+.bf{height:100%;border-radius:2px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:7px}
+.chip{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:9px 11px;cursor:pointer}
+.chip:hover{border-color:var(--border2)}
+.cn{font-size:12px;font-weight:500;margin-bottom:4px;color:var(--text)}
+.cm{font-size:10px;color:var(--text3);display:flex;gap:5px;flex-wrap:wrap}
+.clist{display:flex;flex-direction:column;gap:8px}
+.crow{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:11px 13px;cursor:pointer}
+.crow:hover{border-color:var(--border2)}
+.ct{font-size:13px;font-weight:500;margin-bottom:4px;color:var(--text)}
+.cc{font-size:11px;color:var(--text2);margin-bottom:6px}
+.cb{display:flex;gap:5px;flex-wrap:wrap}
+.songgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.scard{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:10px 12px}
+.stitle{font-size:12px;font-weight:500;margin-bottom:3px;line-height:1.3;color:var(--text)}
+.sartist{font-size:11px;color:var(--text3);margin-bottom:6px}
+.sfoot{display:flex;align-items:center;justify-content:space-between}
+
+/* ── MIDI Batch ─────────────────────────────────── */
+.uzone{border:2px dashed var(--border2);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;background:var(--bg3);display:block;transition:all .2s}
+.uzone:hover,.uzone.drag{border-color:var(--purple);background:var(--purple-bg)}
+.uzone i{font-size:36px;color:var(--text3);display:block;margin-bottom:8px}
+#file-input{display:none}
+
+/* Song-Queue */
+.queue{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.qcard{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.qhead{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.qhead:hover{background:var(--bg2)}
+.qname{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qsteps{display:flex;gap:4px;flex-shrink:0}
+.qstep{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.qs-done{background:var(--teal-bg);color:var(--teal)}
+.qs-skip{background:var(--bg2);color:var(--text3)}
+.qs-err{background:var(--coral-bg);color:var(--coral)}
+.qbody{display:none;padding:0 14px 14px;border-top:.5px solid var(--border)}
+.qbody.open{display:block}
+.qmeta{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 12px}
+.qm{background:var(--bg2);border-radius:var(--r);padding:7px 10px}
+.qm .ql{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)}
+.qm .qv{font-size:16px;font-weight:600}
+
+/* Action buttons row */
+.act-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:.5px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;background:var(--bg3);color:var(--text);font-family:inherit;transition:all .12s}
+.btn:hover{background:var(--bg2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-p{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-p:hover{background:#3C3489}
+.btn-t{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-t:hover{background:#0a4d3a}
+.btn-b{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-b:hover{background:#104278}
+
+/* File downloads */
+.flist{display:flex;flex-direction:column;gap:5px}
+.fitem{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg2);border-radius:var(--r);text-decoration:none;color:var(--text);font-size:12px}
+.fitem:hover{background:var(--border)}
+.fitem i{font-size:15px;color:var(--text2);flex-shrink:0}
+.fcat{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin:10px 0 5px}
+
+/* Batch action bar */
+.batch-bar{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.batch-bar .info{font-size:12px;color:var(--text2);flex:1}
+.pbar{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:8px 0}
+.pfill{height:100%;background:var(--purple);border-radius:3px;transition:width .4s}
+
+/* Detail panel */
+.dph{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:.5px solid var(--border)}
+.dpc{margin-left:auto;cursor:pointer;color:var(--text3);font-size:18px;flex-shrink:0}
+.dpc:hover{color:var(--text)}
+.dps{margin-bottom:14px}
+.dps h3{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px}
+.dps p{font-size:12px;color:var(--text2);line-height:1.6}
+.sri2{background:var(--bg2);border-radius:var(--r);padding:7px 9px;margin-bottom:5px}
+.sri2 .st{font-size:12px;font-weight:500;color:var(--text)}
+.sri2 .sm{font-size:10px;color:var(--text3);margin-top:2px}
+#sovl{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:flex-start;justify-content:center;padding-top:80px}
+#sovl.show{display:flex}
+.sbox{background:var(--bg3);border-radius:var(--rl);width:560px;max-height:70vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);border:.5px solid var(--border2)}
+.shdr{padding:14px 16px;border-bottom:.5px solid var(--border);font-size:11px;color:var(--text3)}
+.srow{padding:10px 16px;cursor:pointer;border-bottom:.5px solid var(--border);display:flex;align-items:center;gap:10px}
+.srow:hover{background:var(--bg2)}
+.srn{font-size:13px;font-weight:500;color:var(--text)}
+.srs{font-size:11px;color:var(--text2)}
+.bbtn{display:inline-flex;align-items:center;gap:6px;background:none;border:.5px solid var(--border2);border-radius:var(--r);padding:5px 12px;cursor:pointer;font-size:12px;color:var(--text2);margin-bottom:14px;font-family:inherit}
+.bbtn:hover{background:var(--bg2)}
+.tab-upload{background:none;border:none;border-bottom:2px solid transparent;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);font-family:inherit;display:flex;align-items:center;gap:5px;margin-bottom:-1px}
+.tab-upload.on{border-bottom-color:var(--purple);color:var(--purple)}
+.player{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:12px 14px;margin-top:8px}
+.player-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.play-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--purple);color:#fff;border:none;font-size:16px;flex-shrink:0;font-family:inherit}
+.play-btn:hover{background:#3C3489}
+.play-btn:disabled{opacity:.5;cursor:not-allowed}
+.player-info{flex:1;min-width:0}
+.player-title{font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player-meta{font-size:10px;color:var(--text3);margin-top:1px}
+.player-time{font-size:11px;color:var(--text2);flex-shrink:0;font-family:var(--mono)}
+.prog-wrap{position:relative;height:5px;background:var(--bg2);border-radius:3px;cursor:pointer;overflow:hidden}
+.prog-fill{height:100%;background:var(--purple);border-radius:3px;pointer-events:none;transition:width .1s linear}
+.piano-row{display:flex;gap:2px;flex-wrap:wrap;margin-top:8px;min-height:16px}
+.piano-key{width:12px;height:14px;border-radius:2px;background:var(--bg2);transition:background .05s;font-size:8px;display:flex;align-items:center;justify-content:center;color:var(--text3)}
+.piano-key.on{background:var(--purple);color:#fff}
+.loading{text-align:center;padding:20px;color:var(--text3)}
+.errbox{background:var(--coral-bg);border:1px solid var(--coral);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--coral);margin:8px 0}
+.okbox{background:var(--teal-bg);border:1px solid var(--teal);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--teal);margin:8px 0}
+.stitle2{font-size:13px;font-weight:600;margin:16px 0 8px;color:var(--text)}
+.divider{height:.5px;background:var(--border);margin:12px 0}
+/* Bottom Player */
+#bottom-player{position:fixed;bottom:0;left:0;right:0;height:72px;background:var(--bg3);
+  border-top:.5px solid var(--border);display:none;align-items:center;gap:14px;
+  padding:0 20px;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.12)}
+#bottom-player.visible{display:flex}
+#content{padding-bottom:80px}
+.bp-info{flex:0 0 220px;min-width:0}
+.bp-title{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}
+.bp-meta{font-size:10px;color:var(--text3)}
+.bp-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.bp-btn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;background:none;border:.5px solid var(--border2);
+  color:var(--text2);font-size:14px;font-family:inherit}
+.bp-btn:hover{background:var(--bg2)}
+.bp-btn.main{width:42px;height:42px;background:var(--purple);color:#fff;
+  border-color:var(--purple);font-size:16px}
+.bp-btn.main:hover{background:#3C3489}
+.bp-center{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.bp-prog-wrap{height:5px;background:var(--bg2);border-radius:3px;cursor:pointer;
+  overflow:hidden;position:relative}
+.bp-prog-fill{height:100%;background:var(--purple);border-radius:3px;
+  transition:width .1s linear;pointer-events:none}
+.bp-time{font-size:10px;color:var(--text3);text-align:right;font-family:monospace;
+  flex-shrink:0;min-width:70px}
+.bp-keys{display:flex;gap:1px;align-items:center;flex-shrink:0;overflow:hidden;max-width:160px}
+.bp-key{width:10px;height:18px;border-radius:2px;background:var(--bg2);
+  transition:background .04s;flex-shrink:0}
+.bp-key.on{background:var(--purple)}
+#bp-tracks{display:flex;gap:10px;align-items:center;flex-shrink:0;overflow:hidden;max-width:340px;flex-wrap:nowrap}
+</style>
+</head>
+<body>
+<div id="app">
+<header id="hdr">
+  <div class="logo"><i class="ti ti-brand-spotify" aria-hidden="true"></i></div>
+  <div class="logo-text"><h1>FREDDY</h1><p>Music Intelligence System v2.0</p></div>
+  <div class="hdr-right">
+    <div class="swrap">
+      <i class="ti ti-search" aria-hidden="true"></i>
+      <input type="text" id="sinput" placeholder="Suchen…" autocomplete="off">
+    </div>
+    <button class="lbtn on" id="btn-de" onclick="setLang('de')">DE</button>
+    <button class="lbtn" id="btn-fr" onclick="setLang('fr')">FR</button>
+  </div>
+</header>
+<div id="main">
+  <nav id="sidebar">
+    <div class="ns" id="ns-main">HAUPTMENÜ</div>
+    <div class="ni on" id="nav-dashboard" onclick="navTo('dashboard')"><i class="ti ti-home"></i><span>Übersicht</span></div>
+    <div class="ni" id="nav-knowledge" onclick="navTo('knowledge')"><i class="ti ti-database"></i><span>Knowledge-DB</span><span class="nbadge">108</span></div>
+    <div class="ni" id="nav-chains" onclick="navTo('chains')"><i class="ti ti-arrow-right-circle"></i><span>Kausalketten</span><span class="nbadge">71</span></div>
+    <div class="ns" id="ns-music">MUSIK</div>
+    <div class="ni" id="nav-songs" onclick="navTo('songs')"><i class="ti ti-playlist"></i><span>Song-Bibliothek</span><span class="nbadge">18</span></div>
+    <div class="ni" id="nav-midi" onclick="navTo('midi')"><i class="ti ti-file-music"></i><span>MIDI-Pipeline</span><span class="nbadge" id="badge-songs">0</span></div>
+    <div class="ns" id="ns-sys">SYSTEM</div>
+    <div class="ni" id="nav-primus" onclick="navTo('primus')"><i class="ti ti-scan"></i><span>PriMus / scanfor</span></div>
+    <div class="ni" id="nav-about" onclick="navTo('about')"><i class="ti ti-info-circle"></i><span>Über FREDDY</span></div>
+  </nav>
+  <main id="content">
+    <div id="pg-dashboard"></div>
+    <div id="pg-knowledge" style="display:none"></div>
+    <div id="pg-chains"    style="display:none"></div>
+    <div id="pg-songs"     style="display:none"></div>
+    <div id="pg-midi"      style="display:none"></div>
+    <div id="pg-primus"    style="display:none"></div>
+    <div id="pg-about"     style="display:none"></div>
+  </main>
+  <aside id="dp"><div id="dpcnt"></div></aside>
+</div>
+</div>
+<div id="sovl" onclick="if(event.target===this)closeSrch()"><div class="sbox" id="sbox"></div></div>
+<input type="file" id="file-input" accept=".mid,.midi" multiple onchange="onFileSelect(event)">
+
+<div id="bottom-player">
+  <div class="bp-info">
+    <div class="bp-title" id="bp-title">—</div>
+    <div class="bp-meta" id="bp-meta">Kein Song geladen</div>
+  </div>
+  <div class="bp-controls">
+    <button class="bp-btn" onclick="bpPrev()" title="Vorheriger Song"><i class="ti ti-player-skip-back"></i></button>
+    <button class="bp-btn main" id="bp-play" onclick="bpToggle()"><i class="ti ti-player-play"></i></button>
+    <button class="bp-btn" onclick="bpNext()" title="Naechster Song"><i class="ti ti-player-skip-forward"></i></button>
+  </div>
+  <div class="bp-center">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px">
+      <div class="bp-keys" id="bp-keys"></div>
+      <div id="bp-tracks"></div>
+    </div>
+    <div class="bp-prog-wrap" onclick="bpSeek(this,event)">
+      <div class="bp-prog-fill" id="bp-pf" style="width:0%"></div>
+    </div>
+  </div>
+  <span class="bp-time" id="bp-time">0:00 / 0:00</span>
+</div>
+
+<script>
+'use strict';
+var API='http://localhost:7432';
+var lang='de', curPage='dashboard', modFilter=null;
+var songQueue=[];        // aktuell geladene Songs aus dem Server
+var openCards={};        // welche Song-Cards aufgeklappt sind
+var batchRunning=false;
+
+/* ── i18n ────────────────────────────────────────── */
+var TX={
+  de:{dash:'Übersicht',know:'Knowledge-DB',chains:'Kausalketten',
+      songs:'Song-Bibliothek',midi:'MIDI-Pipeline',
+      nsMain:'HAUPTMENÜ',nsMusic:'MUSIK',nsSys:'SYSTEM',
+      navPrimus:'PriMus / scanfor',navAbout:'Über FREDDY',
+      cause:'Ursache:',ev:'Ev:',conf:'Konf:',back:'← Zurück',
+      dpSum:'Zusammenfassung',dpCause:'Ursache',dpCtx:'Kontext',
+      dpChains:'Kausalketten',dpMods:'Module',dpAli:'Aliase',dpSrc:'Quellen',
+      srchNone:'Keine Ergebnisse'},
+  fr:{dash:'Tableau de bord',know:'Connaissances',chains:'Chaînes causales',
+      songs:'Bibliothèque',midi:'Pipeline MIDI',
+      nsMain:'MENU',nsMusic:'MUSIQUE',nsSys:'SYSTÈME',
+      navPrimus:'PriMus / scanfor',navAbout:'À propos',
+      cause:'Cause:',ev:'Év:',conf:'Conf:',back:'← Retour',
+      dpSum:'Résumé',dpCause:'Cause',dpCtx:'Contexte',
+      dpChains:'Chaînes causales',dpMods:'Modules',dpAli:'Alias',dpSrc:'Sources',
+      srchNone:'Aucun résultat'}
+};
+function t(k){return(TX[lang]&&TX[lang][k])||TX.de[k]||k;}
+
+function applyI18n(){
+  document.getElementById('ns-main').textContent=t('nsMain');
+  document.getElementById('ns-music').textContent=t('nsMusic');
+  document.getElementById('ns-sys').textContent=t('nsSys');
+  document.querySelector('#nav-dashboard span').textContent=t('dash');
+  document.querySelector('#nav-knowledge span').textContent=t('know');
+  document.querySelector('#nav-chains span').textContent=t('chains');
+  document.querySelector('#nav-songs span').textContent=t('songs');
+  document.querySelector('#nav-midi span').textContent=t('midi');
+  document.querySelector('#nav-primus span').textContent=t('navPrimus');
+  document.querySelector('#nav-about span').textContent=t('navAbout');
+  document.getElementById('sinput').placeholder=lang==='fr'?'Rechercher…':'Suchen…';
+}
+function setLang(l){
+  lang=l;
+  document.documentElement.lang=l;
+  document.getElementById('btn-de').classList.toggle('on',l==='de');
+  document.getElementById('btn-fr').classList.toggle('on',l==='fr');
+  applyI18n();loadPage(curPage);
+}
+
+/* ── API ─────────────────────────────────────────── */
+function apiGet(path){
+  var sep=path.indexOf('?')>=0?'&':'?';
+  return fetch(API+path+sep+'lang='+lang).then(function(r){return r.json();}).catch(function(){return null;});
+}
+function apiPost(path,data){
+  return fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(function(r){return r.json();}).catch(function(e){return{error:e.message};});
+}
+
+/* ── Navigation ──────────────────────────────────── */
+function navTo(page){
+  modFilter=null;
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');});
+  var el=document.getElementById('nav-'+page);if(el)el.classList.add('on');
+  document.querySelectorAll('[id^="pg-"]').forEach(function(p){p.style.display='none';});
+  var pg=document.getElementById('pg-'+page);if(pg)pg.style.display='';
+  closeDP();curPage=page;loadPage(page);
+}
+function loadPage(page){
+  var el=document.getElementById('pg-'+page);if(!el)return;
+  el.innerHTML='<div class="loading"><i class="ti ti-loader"></i> Laden…</div>';
+  try{
+    if(page==='dashboard')renderDash(el);
+    else if(page==='knowledge')renderKnow(el);
+    else if(page==='chains')renderChains(el);
+    else if(page==='songs')renderSongs(el);
+    else if(page==='midi')renderMidi(el);
+    else if(page==='primus')renderPrimus(el);
+    else if(page==='about')renderAbout(el);
+  }catch(e){el.innerHTML='<div class="errbox"><b>Fehler:</b> '+escH(e.message)+'</div>';console.error(e);}
+}
+
+/* ── Colours / helpers ───────────────────────────── */
+var MCOLS={
+  M01:{c:'var(--coral)',bg:'var(--coral-bg)',icon:'ti-lungs'},
+  M02:{c:'var(--amber)',bg:'var(--amber-bg)',icon:'ti-heart'},
+  M03:{c:'var(--blue)',bg:'var(--blue-bg)',icon:'ti-building'},
+  M04:{c:'var(--green)',bg:'var(--green-bg)',icon:'ti-hammer'},
+  M05:{c:'var(--purple)',bg:'var(--purple-bg)',icon:'ti-stars'},
+  M06:{c:'var(--teal)',bg:'var(--teal-bg)',icon:'ti-world'},
+  M07:{c:'var(--blue)',bg:'var(--blue-bg)',icon:'ti-device-audio-tape'},
+  M08:{c:'var(--amber)',bg:'var(--amber-bg)',icon:'ti-building-bank'},
+  M09:{c:'var(--coral)',bg:'var(--coral-bg)',icon:'ti-music'},
+  M10:{c:'var(--purple)',bg:'var(--purple-bg)',icon:'ti-notes'}
+};
+function mc(id){return MCOLS[id]||{c:'var(--gray)',bg:'var(--gray-bg)',icon:'ti-folder'};}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function badge(txt,c,bg){return '<span class="badge" style="background:'+bg+';color:'+c+'">'+escH(txt)+'</span>';}
+function evBadge(ev){var m={high:{c:'var(--teal)',bg:'var(--teal-bg)'},medium:{c:'var(--amber)',bg:'var(--amber-bg)'},low:{c:'#A32D2D',bg:'#FCEBEB'}};var s=m[ev]||m.medium;return badge(t('ev')+' '+ev,s.c,s.bg);}
+function cfBadge(cf){var m={high:{c:'var(--blue)',bg:'var(--blue-bg)'},medium:{c:'var(--purple)',bg:'var(--purple-bg)'},low:{c:'var(--gray)',bg:'var(--gray-bg)'}};var s=m[cf]||m.medium;return badge(t('conf')+' '+cf,s.c,s.bg);}
+function sc(label,val,sub,col){
+  return '<div class="sc"><div class="l">'+escH(label)+'</div><div class="v" style="color:'+(col||'var(--text)')+'">'+escH(String(val))+'</div>'+(sub?'<div class="s">'+escH(sub)+'</div>':'')+'</div>';
+}
+function modCardH(m){
+  var shortId="M"+String(m.module_number).padStart(2,"0");
+  var mc2=mc(shortId);var pct=Math.min(100,Math.round((m.chain_count/11)*100));
+  var num=String(m.module_number).padStart(2,'0');
+  var tit=(m.title||'').split(' → ')[0];
+  return '<div class="mcard" onclick="showMod(\''+escH(m.module_id)+'\')">'+
+    '<div class="micon" style="background:'+mc2.bg+';color:'+mc2.c+'"><i class="ti '+mc2.icon+'"></i></div>'+
+    '<div class="mtit" style="color:'+mc2.c+'">M'+num+' — '+escH(tit)+'</div>'+
+    '<div class="mmeta">'+m.node_count+' Nodes · '+m.chain_count+' Chains · '+m.source_count+' Quellen</div>'+
+    '<div class="bw"><div class="bf" style="width:'+pct+'%;background:'+mc2.c+'"></div></div>'+
+    '</div>';
+}
+
+/* ── Dashboard ───────────────────────────────────── */
+function renderDash(el){
+  el.innerHTML='<div class="pt">'+t('dash')+'</div><div class="ps">FREDDY Music Intelligence System v2.0</div>'+
+    '<div class="sgrid" id="dst"><div class="sc"><div class="l">Nodes</div><div class="v" style="color:var(--blue)">108</div></div>'+
+    '<div class="sc"><div class="l">Chains</div><div class="v" style="color:var(--purple)">71</div></div>'+
+    '<div class="sc"><div class="l">Quellen</div><div class="v" style="color:var(--teal)">72</div></div>'+
+    '<div class="sc"><div class="l">Songs</div><div class="v" style="color:var(--coral)" id="dsongs">…</div></div>'+
+    '</div>'+
+    '<div class="stitle2">Module</div><div class="mgrid" id="dmods"><div class="loading"><i class="ti ti-loader"></i></div></div>';
+  apiGet('/api/status').then(function(st){
+    if(!st)return;
+    var el2=document.getElementById('dsongs');if(el2)el2.textContent=st.songs_count||0;
+    var badge2=document.getElementById('badge-songs');if(badge2)badge2.textContent=st.songs_count||0;
+  });
+  apiGet('/api/modules').then(function(mods){
+    var el2=document.getElementById('dmods');if(!el2)return;
+    if(!mods){el2.innerHTML='<div class="errbox">Server nicht erreichbar</div>';return;}
+    el2.innerHTML=mods.map(modCardH).join('');
+  });
+}
+
+/* ── Knowledge ───────────────────────────────────── */
+function renderKnow(el){
+  if(modFilter){renderModNodes(el,modFilter);return;}
+  el.innerHTML='<div class="pt">Knowledge-Datenbank</div><div class="ps">108 Nodes · 10 thematische Module</div>'+
+    '<div class="mgrid" id="km"><div class="loading"><i class="ti ti-loader"></i></div></div>';
+  apiGet('/api/modules').then(function(mods){
+    var el2=document.getElementById('km');if(!el2)return;
+    if(!mods){el2.innerHTML='<div class="errbox">Server nicht erreichbar</div>';return;}
+    el2.innerHTML=mods.map(modCardH).join('');
+  });
+}
+function showMod(id){modFilter=id;navTo('knowledge');}
+function renderModNodes(el,modId){
+  el.innerHTML='<button class="bbtn" onclick="modFilter=null;loadPage(\'knowledge\')"><i class="ti ti-arrow-left"></i> '+t('back')+'</button><div class="loading"><i class="ti ti-loader"></i></div>';
+  Promise.all([apiGet('/api/nodes?module='+modId),apiGet('/api/modules')]).then(function(res){
+    var nodes=res[0]||[],mods=res[1]||[];
+    var mod=mods.find(function(m){return m.module_id===modId;})||{};
+    var mc2=mc(modId);var num=String(mod.module_number||'').padStart(2,'0');
+    var html='<button class="bbtn" onclick="modFilter=null;loadPage(\'knowledge\')"><i class="ti ti-arrow-left"></i> '+t('back')+'</button>';
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:'+mc2.bg+';border-radius:var(--rl);padding:12px 14px">'+
+      '<div class="micon" style="background:'+mc2.bg+';color:'+mc2.c+';margin-bottom:0"><i class="ti '+mc2.icon+'"></i></div>'+
+      '<div><p style="font-weight:600;color:'+mc2.c+'">'+escH(mod.title||modId)+'</p>'+
+      '<p style="font-size:11px;color:'+mc2.c+';opacity:.7">'+nodes.length+' Nodes</p></div></div>';
+    html+='<div class="cgrid">'+nodes.map(function(n){
+      return '<div class="chip" onclick="showNode(\''+escH(n.node_id)+'\')">'+
+        '<div class="cn">'+escH(n.name_display||n.name)+'</div>'+
+        '<div class="cm">'+cfBadge(n.confidence_level)+
+        '<span style="font-size:10px;color:var(--text3)">'+escH(n.source_status||'')+'</span></div></div>';
+    }).join('')+'</div>';
+    el.innerHTML=html;
+  });
+}
+
+/* ── Chains ──────────────────────────────────────── */
+function renderChains(el){
+  el.innerHTML='<div class="pt">Kausalketten</div><div class="ps">71 dokumentierte musikalische Zusammenhänge</div>'+
+    '<div id="cc"><div class="loading"><i class="ti ti-loader"></i></div></div>';
+  apiGet('/api/chains').then(function(chains){
+    var el2=document.getElementById('cc');if(!el2)return;
+    if(!chains){el2.innerHTML='<div class="errbox">Server nicht erreichbar</div>';return;}
+    var pm={BOD:'M01',EMO:'M02',SPA:'M03',WRK:'M04',REL:'M05',MIG:'M06',TEC:'M07',ECO:'M08',INS:'M09',NOT:'M10'};
+    var gr={};chains.forEach(function(c){var p=(c.chain_id||'').split('_')[0];if(!gr[p])gr[p]=[];gr[p].push(c);});
+    var html='';
+    Object.keys(gr).forEach(function(p){
+      var chs=gr[p],mid=pm[p]||'',mc2=mc(mid);
+      html+='<div style="margin-bottom:18px">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+        '<i class="ti '+mc2.icon+'" style="color:'+mc2.c+';font-size:16px"></i>'+
+        '<span style="font-size:12px;font-weight:600;color:'+mc2.c+'">'+mid+' — '+p+'</span>'+
+        badge(chs.length,mc2.c,mc2.bg)+'</div><div class="clist">';
+      chs.forEach(function(c){
+        html+='<div class="crow" onclick="showChain(\''+escH(c.chain_id)+'\')">'+
+          '<div class="ct">'+escH(c.title)+'</div>'+
+          '<div class="cc">'+t('cause')+' <strong>'+escH(c.cause_name)+'</strong>'+(c.context_name?' · '+escH(c.context_name):'')+'</div>'+
+          '<div class="cb">'+evBadge(c.evidence_level)+' '+cfBadge(c.confidence_level)+'</div></div>';
+      });
+      html+='</div></div>';
+    });
+    el2.innerHTML=html||'<div style="text-align:center;padding:32px;color:var(--text3)">Keine Kausalketten</div>';
+  });
+}
+
+/* ── Songs (Bibliothek) ──────────────────────────── */
+var SONGS=[
+  {title:'A Whiter Shade of Pale',artist:'Procol Harum',genre:'Ballad',level:8},
+  {title:'Let It Be',artist:'The Beatles',genre:'Ballad',level:8},
+  {title:'Killing Me Softly',artist:'Roberta Flack',genre:'Ballad',level:11},
+  {title:'River Flows in You',artist:'Yiruma',genre:'Instrumental',level:14},
+  {title:'Turkish March',artist:'Mozart',genre:'Klassik',level:3},
+  {title:'Eine kleine Nachtmusik',artist:'Mozart',genre:'Klassik',level:4},
+  {title:'Polonaise',artist:'Chopin',genre:'Klassik',level:6},
+  {title:'The Blue Danube',artist:'Strauss',genre:'Klassik',level:5},
+  {title:'Trout Quintet (4. Satz)',artist:'Schubert',genre:'Klassik',level:5},
+  {title:'Ode to Joy',artist:'Beethoven',genre:'Klassik',level:1},
+  {title:'Seven Nation Army',artist:'White Stripes',genre:'Alternative',level:1},
+  {title:'Misty',artist:'Mantovani',genre:'Instrumental',level:5},
+  {title:'Happy Birthday',artist:'Traditional',genre:'Traditional',level:2},
+  {title:'Jingle Bells',artist:'Traditional',genre:'Traditional',level:2},
+  {title:'La Marseillaise',artist:'Frankreich',genre:'Hymne',level:2},
+  {title:'Deutschlandlied',artist:'Haydn',genre:'Hymne',level:2},
+  {title:'Nationalhymne Brasilien',artist:'Traditional',genre:'Hymne',level:3},
+  {title:'Hanukkah',artist:'Traditional',genre:'Traditional',level:4}
+];
+var GCOLS={Ballad:{c:'var(--coral)',bg:'var(--coral-bg)'},Klassik:{c:'var(--purple)',bg:'var(--purple-bg)'},
+  Instrumental:{c:'var(--teal)',bg:'var(--teal-bg)'},Alternative:{c:'var(--amber)',bg:'var(--amber-bg)'},
+  Traditional:{c:'var(--blue)',bg:'var(--blue-bg)'},Hymne:{c:'var(--green)',bg:'var(--green-bg)'}};
+function renderSongs(el){
+  var html='<div class="pt">Song-Bibliothek</div><div class="ps">18 Stücke — PDF + MusicXML exportiert</div><div class="songgrid">';
+  SONGS.forEach(function(s){
+    var g=GCOLS[s.genre]||{c:'var(--gray)',bg:'var(--gray-bg)'};
+    html+='<div class="scard"><div class="stitle">'+escH(s.title)+'</div>'+
+      '<div class="sartist">'+escH(s.artist)+'</div>'+
+      '<div class="sfoot">'+badge(s.genre,g.c,g.bg)+
+      '<span style="font-size:10px;color:var(--text3)">Lvl '+s.level+'</span></div></div>';
+  });
+  el.innerHTML=html+'</div>';
+}
+
+/* ═══════════════════════════════════════════════════
+   MIDI-BATCH-PIPELINE
+═══════════════════════════════════════════════════ */
+function renderMidi(el){
+  // Songs vom Server laden
+  apiGet('/api/midi/songs').then(function(data){
+    songQueue=data||[];
+    _songQueue=(data||[]).map(function(s){return s.stem;});
+    var badge2=document.getElementById('badge-songs');
+    if(badge2)badge2.textContent=songQueue.length;
+    buildMidiUI(el);
+  }).catch(function(){buildMidiUI(el);});
+}
+
+function buildMidiUI(el){
+  var nSongs=songQueue.length;
+  var nCsv=songQueue.filter(function(s){return s.csv_done;}).length;
+  var nPdf=songQueue.filter(function(s){return s.pdf_done;}).length;
+  var nXml=songQueue.filter(function(s){return s.xml_done;}).length;
+  var nPrimus=songQueue.filter(function(s){return s.primus_done;}).length;
+
+  var html='<div class="pt">MIDI-Batch-Pipeline</div>'+
+    '<div class="ps">Mehrere MIDI-Dateien einlesen · Pro Song: eigener Ordner mit CSV / PDF / MusicXML / PriMus-Handoff</div>';
+
+  // Upload-Zone
+  // Upload-Tabs
+  html+='<div style="display:flex;gap:4px;margin-bottom:10px;border-bottom:.5px solid var(--border)">';
+  html+='<button class="tab-upload on" id="tu-midi" onclick="setUploadTab(\'midi\')">'+
+    '<i class="ti ti-file-music"></i> MIDI</button>';
+  html+='<button class="tab-upload" id="tu-xml" onclick="setUploadTab(\'xml\')">'+
+    '<i class="ti ti-music"></i> MusicXML</button>';
+  html+='<button class="tab-upload" id="tu-text" onclick="setUploadTab(\'text\')">'+
+    '<i class="ti ti-file-text"></i> Textquelle</button>';
+  html+='</div>';
+
+  html+='<label class="uzone" for="file-input" id="uzone"'+
+    ' ondragover="event.preventDefault();this.classList.add(\'drag\')"'+
+    ' ondragleave="this.classList.remove(\'drag\')"'+
+    ' ondrop="onDrop(event)">'+
+    '<i class="ti ti-files-off" aria-hidden="true"></i>'+
+    '<p id="uzone-label" style="font-size:13px;color:var(--text2)">MIDI-Dateien hier ablegen oder klicken</p>'+
+    '<p id="uzone-sub" style="font-size:11px;color:var(--text3);margin-top:4px">Mehrere Dateien · .mid .midi</p>'+
+    '</label>';
+
+  // Statistik-Balken
+  if(nSongs>0){
+    html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px">'+
+      sc('Songs gesamt',nSongs,'','var(--text)')+
+      sc('CSV/JSONL fertig',nCsv,'FREDDYtext','var(--teal)')+
+      sc('PDF/XML fertig',nPdf,'FREDDYnote','var(--purple)')+
+      sc('PriMus-Handoff',nPrimus,'Bereit','var(--blue)')+'</div>';
+
+    // Batch-Action-Bar
+    html+='<div class="batch-bar" style="margin-top:14px">'+
+      '<div class="info">'+nSongs+' Song'+(nSongs!==1?'s':'')+' in der Queue</div>'+
+      '<button class="btn btn-p" onclick="batchNote()" id="btn-note" '+
+        (nCsv===0?'disabled':'')+'>'+
+        '<i class="ti ti-music"></i> FREDDYnote — Alle zu PDF + MusicXML</button>'+
+      '<button class="btn btn-b" onclick="batchPrimus()" id="btn-primus" '+
+        (nXml===0?'disabled':'')+'>'+
+        '<i class="ti ti-scan"></i> PriMus-Handoff für alle</button>'+
+      '</div>'+
+      '<div id="batch-progress" style="display:none">'+
+      '<div class="pbar"><div class="pfill" id="bpf" style="width:0%"></div></div>'+
+      '<div id="batch-msg" style="font-size:11px;color:var(--text3)"></div>'+
+      '</div>';
+  }
+
+  html+='<div id="batch-result"></div>';
+
+  // Song-Queue
+  if(nSongs>0){
+    html+='<div class="stitle2">Song-Ordner ('+nSongs+')</div><div class="queue" id="sq">';
+    songQueue.forEach(function(s,idx){
+      html+=songCardH(s,idx);
+    });
+    html+='</div>';
+  } else {
+    html+='<div style="text-align:center;padding:40px;color:var(--text3);margin-top:8px">'+
+      '<i class="ti ti-file-music" style="font-size:32px;display:block;margin-bottom:10px"></i>'+
+      'Noch keine Songs. MIDI-Dateien hochladen.</div>';
+  }
+
+  el.innerHTML=html;
+}
+
+function songCardH(s,idx){
+  var csvOk=s.csv_done,pdfOk=s.pdf_done,xmlOk=s.xml_done,priOk=s.primus_done;
+  var meta=s.meta||{};
+  var stepCls=function(ok){return ok?'qs-done':'qs-skip';};
+  var html='<div class="qcard" id="qc-'+idx+'">'+
+    '<div class="qhead" onclick="toggleCard('+idx+')">'+
+    '<i class="ti ti-folder" style="font-size:16px;color:var(--amber);flex-shrink:0"></i>'+
+    '<span class="qname">'+escH(s.stem)+'</span>'+
+    '<div class="qsteps">'+
+    '<div class="qstep '+stepCls(csvOk)+'" title="FREDDYtext (CSV)">T</div>'+
+    '<div class="qstep '+stepCls(pdfOk)+'" title="FREDDYnote (PDF)">N</div>'+
+    '<div class="qstep '+stepCls(xmlOk)+'" title="MusicXML">X</div>'+
+    '<div class="qstep '+stepCls(priOk)+'" title="PriMus-Handoff">P</div>'+
+    '</div>'+
+    '<i class="ti ti-chevron-down" style="font-size:14px;color:var(--text3);margin-left:6px"></i>'+
+    '</div>'+
+    '<div class="qbody'+(openCards[idx]?' open':'')+'" id="qb-'+idx+'">';
+
+  // Meta-Infos
+  if(meta.bpm||meta.time_signature||meta.tracks||meta.key_signature){
+    html+='<div class="qmeta">';
+    if(meta.bpm)html+='<div class="qm"><div class="ql">BPM</div><div class="qv" style="color:var(--coral)">'+meta.bpm+'</div></div>';
+    if(meta.time_signature)html+='<div class="qm"><div class="ql">Takt</div><div class="qv">'+escH(meta.time_signature)+'</div></div>';
+    if(meta.tracks)html+='<div class="qm"><div class="ql">Tracks</div><div class="qv" style="color:var(--purple)">'+meta.tracks+'</div></div>';
+    if(meta.key_signature)html+='<div class="qm"><div class="ql">Tonart</div><div class="qv">'+escH(meta.key_signature)+'</div></div>';
+    html+='</div>';
+  }
+
+  // Action-Buttons
+  html+='<div class="act-row">';
+  if(!pdfOk&&csvOk){
+    html+='<button class="btn btn-p" onclick="singleNote(\''+escH(s.stem)+'\','+idx+')">'+
+      '<i class="ti ti-music"></i> PDF + MusicXML erstellen</button>';
+  }
+  if(xmlOk&&!priOk){
+    html+='<button class="btn btn-b" onclick="singlePrimus(\''+escH(s.stem)+'\','+idx+')">'+
+      '<i class="ti ti-scan"></i> PriMus-Handoff</button>';
+  }
+  html+='</div>';
+
+  // Ordnerstruktur & Downloads
+  var files=s.files||{};
+  var fkeys=Object.keys(files);
+  if(fkeys.length>0){
+    // Gruppieren
+    var csvFiles={},notFiles={},priFiles={};
+    fkeys.forEach(function(k){
+      var url=files[k];
+      if(url.indexOf('/csv/')>0)csvFiles[k]=url;
+      else if(url.indexOf('/notation/')>0)notFiles[k]=url;
+      else if(url.indexOf('/primus/')>0)priFiles[k]=url;
+    });
+    if(Object.keys(csvFiles).length){
+      html+='<div class="fcat"><i class="ti ti-folder" style="vertical-align:-2px"></i> csv/ — FREDDYtext</div><div class="flist">';
+      Object.keys(csvFiles).forEach(function(k){html+=fileItemH(k,csvFiles[k]);});
+      html+='</div>';
+    }
+    if(Object.keys(notFiles).length){
+      html+='<div class="fcat"><i class="ti ti-folder" style="vertical-align:-2px"></i> notation/ — FREDDYnote</div><div class="flist">';
+      Object.keys(notFiles).forEach(function(k){html+=fileItemH(k,notFiles[k]);});
+      html+='</div>';
+    }
+    if(Object.keys(priFiles).length){
+      html+='<div class="fcat"><i class="ti ti-folder" style="vertical-align:-2px"></i> primus/_FREDDY_TO_PRIMUS_HANDOFF/</div><div class="flist">';
+      Object.keys(priFiles).forEach(function(k){html+=fileItemH(k,priFiles[k]);});
+      html+='</div>';
+    }
+  }
+
+  // MIDI-Player (nur wenn MIDI-Datei vorhanden)
+  var midiFile=s.files&&Object.keys(s.files).filter(function(k){return s.midi_file||k;});
+  if(s.csv_done){
+    html+='<div class="player" id="player-'+idx+'">';
+    html+='<div class="player-top">';
+    var pid=escH(s.stem);
+    html+='<button class="play-btn" id="pbtn-'+pid+'" onclick="togglePlayer(\''+pid+'\')" title="MIDI abspielen"><i class="ti ti-player-play"></i></button>';
+    html+='<div class="player-info"><div class="player-title">'+escH(s.stem.replace(/_/g,' '))+'</div>';
+    html+='<div class="player-meta" id="pmeta-'+pid+'">▶ Play druecken</div></div>';
+    html+='<span class="player-time" id="ptime-'+pid+'">0:00/0:00</span>';
+    html+='</div>';
+    html+='<div class="prog-wrap" onclick="seekPlayer(this,event,\''+pid+'\')">';
+    html+='<div class="prog-fill" id="ppf-'+pid+'" style="width:0%"></div></div>';
+    html+='<div class="piano-row" id="pkeys-'+pid+'"></div>';
+    html+='</div>';
+  }
+  html+='<div id="sr-'+idx+'"></div>';
+  html+='</div></div>';
+  return html;
+}
+
+function fileItemH(name,url){
+  var icons={
+    'raw_events.csv':'ti-table','normalized_events.csv':'ti-table',
+    'notes_only.csv':'ti-music-star','semantic_events.jsonl':'ti-code',
+    'freddy_midi_manifest.json':'ti-file-code','analysis_summary.md':'ti-file-text',
+    'score.pdf':'ti-file-type-pdf','score.musicxml':'ti-music',
+    'primus.musicxml':'ti-scan'
+  };
+  var icon=icons[name]||'ti-file';
+  var col=name.endsWith('.pdf')?'color:var(--coral)':name.includes('musicxml')?'color:var(--blue)':'color:var(--text2)';
+  return '<a href="'+API+url+'" class="fitem" target="_blank" download>'+
+    '<i class="ti '+icon+'" style="'+col+'"></i>'+
+    '<div><div style="font-weight:500">'+escH(name)+'</div>'+
+    '<div style="font-size:10px;color:var(--text3)">'+escH(url.split('/').slice(-2).join('/'))+'</div></div>'+
+    '<i class="ti ti-download" style="margin-left:auto;color:var(--text3);font-size:14px"></i></a>';
+}
+
+function toggleCard(idx){
+  openCards[idx]=!openCards[idx];
+  var body=document.getElementById('qb-'+idx);
+  if(body)body.classList.toggle('open',!!openCards[idx]);
+}
+
+/* ── Upload ───────────────────────────────────────── */
+var uploadTab='midi';
+var uploadTypes={'midi':{'label':'MIDI-Dateien ablegen oder klicken','sub':'Mehrere Dateien · .mid .midi','accept':'.mid,.midi'},
+  'xml':{'label':'MusicXML-Dateien ablegen (PriMus-Export)','sub':'Mehrere Dateien · .xml .musicxml .mxl','accept':'.xml,.musicxml,.mxl'},
+  'text':{'label':'Textquellen ablegen (FREDDYtext)','sub':'Mehrere Dateien · .txt .md .csv .json .html .epub','accept':'.txt,.md,.csv,.json,.jsonl,.html,.epub'}};
+function setUploadTab(tab){
+  uploadTab=tab;
+  document.querySelectorAll('.tab-upload').forEach(function(b){b.classList.remove('on');});
+  var el=document.getElementById('tu-'+tab);if(el)el.classList.add('on');
+  var fi=document.getElementById('file-input');
+  if(fi)fi.accept=uploadTypes[tab].accept;
+  var lbl=document.getElementById('uzone-label');if(lbl)lbl.textContent=uploadTypes[tab].label;
+  var sub=document.getElementById('uzone-sub');if(sub)sub.textContent=uploadTypes[tab].sub;
+}
+function onDrop(e){
+  e.preventDefault();
+  var uz=document.getElementById('uzone');if(uz)uz.classList.remove('drag');
+  var files=e.dataTransfer&&e.dataTransfer.files;
+  if(files&&files.length)uploadFiles(files,uploadTab);
+}
+function onFileSelect(e){if(e.target.files&&e.target.files.length)uploadFiles(e.target.files,uploadTab);}
+
+function uploadFiles(files,tab){
+  tab=tab||'midi';
+  var route=tab==='xml'?'/api/musicxml/upload':tab==='text'?'/api/text/upload':'/api/midi/upload';
+  var label=tab==='xml'?'MusicXML':tab==='text'?'Text':('MIDI');
+  var el=document.getElementById('pg-midi');
+  if(el)el.innerHTML='<div class="loading"><i class="ti ti-loader"></i> Lade '+files.length+' '+label+'-Datei'+(files.length!==1?'en':'')+'…</div>';
+  var form=new FormData();
+  for(var i=0;i<files.length;i++)form.append('file',files[i]);
+  fetch(API+route,{method:'POST',body:form})
+    .then(function(r){return r.json();})
+    .then(function(results){
+      // Fehler anzeigen
+      var errs=results.filter(function(r){return r.error;});
+      var ok=results.filter(function(r){return !r.error;});
+      // Songs neu laden
+      apiGet('/api/midi/songs').then(function(data){
+        songQueue=data||[];
+        var el2=document.getElementById('badge-songs');
+        if(el2)el2.textContent=songQueue.length;
+        var pg=document.getElementById('pg-midi');
+        if(pg){
+          buildMidiUI(pg);
+          // Ergebnis-Banner
+          var res=document.getElementById('batch-result');
+          if(res){
+            var html='';
+            if(ok.length)html+='<div class="okbox"><i class="ti ti-check"></i> '+ok.length+' Datei'+(ok.length!==1?'en':'')+' analysiert und CSV erstellt.</div>';
+            if(errs.length)html+='<div class="errbox"><i class="ti ti-alert-triangle"></i> '+errs.length+' Fehler: '+errs.map(function(e){return escH(e.filename||'?')+': '+escH(e.error);}).join(', ')+'</div>';
+            res.innerHTML=html;
+          }
+          // Alle neuen Cards aufklappen
+          ok.forEach(function(r){
+            var idx=songQueue.findIndex(function(s){return s.stem===r.stem;});
+            if(idx>=0)openCards[idx]=true;
+          });
+          buildMidiUI(pg);
+        }
+      });
+    })
+    .catch(function(e){
+      var el2=document.getElementById('pg-midi');
+      if(el2)el2.innerHTML='<div class="errbox">Upload-Fehler: '+escH(e.message)+'</div>';
+    });
+}
+
+/* ── Batch FREDDYnote ─────────────────────────────── */
+function batchNote(){
+  if(batchRunning)return;
+  batchRunning=true;
+  var el=document.getElementById('batch-progress');if(el)el.style.display='block';
+  var pf=document.getElementById('bpf');if(pf)pf.style.width='20%';
+  var msg=document.getElementById('batch-msg');if(msg)msg.textContent='FREDDYnote läuft… (kann etwas dauern)';
+  var btn=document.getElementById('btn-note');if(btn)btn.disabled=true;
+  var t2=setInterval(function(){var p=document.getElementById('bpf');if(p){var w=parseInt(p.style.width)||20;if(w<85)p.style.width=(w+5)+'%';}},1500);
+  apiPost('/api/midi/convert-note',{stems:[]}).then(function(data){
+    clearInterval(t2);batchRunning=false;
+    var pf2=document.getElementById('bpf');if(pf2)pf2.style.width='100%';
+    apiGet('/api/midi/songs').then(function(songs){
+      songQueue=songs||[];
+      var pg=document.getElementById('pg-midi');if(pg)buildMidiUI(pg);
+      var res=document.getElementById('batch-result');
+      if(res){
+        if(data.error)res.innerHTML='<div class="errbox">'+escH(data.error)+'</div>';
+        else res.innerHTML='<div class="okbox"><i class="ti ti-check"></i> FREDDYnote abgeschlossen · '+
+          (data.converted||[]).length+' Songs konvertiert.</div>';
+      }
+    });
+  }).catch(function(e){
+    clearInterval(t2);batchRunning=false;
+    var res=document.getElementById('batch-result');
+    if(res)res.innerHTML='<div class="errbox">Fehler: '+escH(e.message)+'</div>';
+  });
+}
+
+function singleNote(stem,idx){
+  var resEl=document.getElementById('sr-'+idx);
+  if(resEl)resEl.innerHTML='<div class="loading" style="text-align:left"><i class="ti ti-loader"></i> FREDDYnote läuft…</div>';
+  apiPost('/api/midi/convert-note',{stems:[stem]}).then(function(data){
+    apiGet('/api/midi/songs').then(function(songs){
+      songQueue=songs||[];
+      openCards[idx]=true;
+      var pg=document.getElementById('pg-midi');if(pg)buildMidiUI(pg);
+    });
+  });
+}
+
+/* ── Batch PriMus-Handoff ─────────────────────────── */
+function batchPrimus(){
+  var xmlSongs=songQueue.filter(function(s){return s.xml_done;});
+  if(!xmlSongs.length)return;
+  var btn=document.getElementById('btn-primus');if(btn)btn.disabled=true;
+  var done=0;
+  var res=document.getElementById('batch-result');
+  var promises=xmlSongs.map(function(s){
+    return apiPost('/api/midi/primus',{stem:s.stem}).then(function(){done++;});
+  });
+  Promise.all(promises).then(function(){
+    apiGet('/api/midi/songs').then(function(songs){
+      songQueue=songs||[];
+      var pg=document.getElementById('pg-midi');if(pg)buildMidiUI(pg);
+      var res2=document.getElementById('batch-result');
+      if(res2)res2.innerHTML='<div class="okbox"><i class="ti ti-scan"></i> PriMus-Handoff erstellt für '+done+' Song'+(done!==1?'s':'')+'.</div>';
+    });
+  });
+}
+
+function singlePrimus(stem,idx){
+  var resEl=document.getElementById('sr-'+idx);
+  if(resEl)resEl.innerHTML='<div class="loading" style="text-align:left"><i class="ti ti-loader"></i> PriMus-Handoff…</div>';
+  apiPost('/api/midi/primus',{stem:stem}).then(function(data){
+    apiGet('/api/midi/songs').then(function(songs){
+      songQueue=songs||[];openCards[idx]=true;
+      var pg=document.getElementById('pg-midi');if(pg)buildMidiUI(pg);
+    });
+  });
+}
+
+/* ── PriMus ──────────────────────────────────────── */
+function renderPrimus(el){
+  el.innerHTML='<div class="pt">PriMus / scanforFREDDY</div><div class="ps">Integration mit PriMus und SharpEye über MusicXML</div>'+
+    '<div class="sgrid">'+
+    sc('MusicXML Import','✓ Aktiv','PriMus → FREDDY','var(--teal)')+
+    sc('MusicXML Export','✓ Aktiv','FREDDY → PriMus','var(--blue)')+
+    sc('SharpEye OCR','via MusicXML','Scan → XML → FREDDY','var(--amber)')+
+    sc('PriMus .pri','—','Kein öff. Spec','var(--gray)')+'</div>'+
+    '<div class="stitle2">Ordner-Struktur pro Song</div>'+
+    '<div style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:14px">'+
+    '<pre style="font-size:12px;color:var(--text2);line-height:1.8">data/songs/\n'+
+    '  &lt;SongName&gt;/\n'+
+    '    midi/         ← Original .mid\n'+
+    '    csv/          ← FREDDYtext: notes_only.csv, semantic_events.jsonl …\n'+
+    '    notation/     ← FREDDYnote: score.pdf, score.musicxml\n'+
+    '    primus/\n'+
+    '      _FREDDY_TO_PRIMUS_HANDOFF/\n'+
+    '        &lt;SongName&gt;.musicxml  ← direkt in PriMus importierbar</pre></div>'+
+    '<div class="stitle2">PriMus-Import</div>'+
+    '<div style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:14px">'+
+    '<pre style="font-size:12px;color:var(--text2);line-height:1.8">1. FREDDY: MIDI-Pipeline → PriMus-Handoff erstellen\n'+
+    '2. PriMus öffnen\n'+
+    '3. Datei → Importieren → MusicXML\n'+
+    '4. Datei auswählen aus:\n'+
+    '   data/songs/&lt;Song&gt;/primus/_FREDDY_TO_PRIMUS_HANDOFF/&lt;Song&gt;.musicxml</pre></div>';
+}
+
+/* ── About ───────────────────────────────────────── */
+function renderAbout(el){
+  var engines=[
+    {n:'FREDDYfactory',v:'v0.2.0',c:'var(--purple)',icon:'ti-building-factory-2',d:'Core & Integration Hub'},
+    {n:'FREDDYtext',v:'v0.2',c:'var(--teal)',icon:'ti-file-text',d:'MIDI → ASCII Bridge'},
+    {n:'FREDDYnote',v:'v0.4',c:'var(--coral)',icon:'ti-music',d:'Notation → PDF / MusicXML'},
+    {n:'FREDDYdata',v:'v1.8',c:'var(--blue)',icon:'ti-database',d:'Knowledge Graph (DE/FR)'},
+    {n:'FREDDYrole',v:'v0.2',c:'var(--amber)',icon:'ti-users',d:'Rollen & QA'},
+    {n:'scanforFREDDY',v:'v0.2',c:'var(--green)',icon:'ti-scan',d:'PriMus / SharpEye'}
+  ];
+  var html='<div class="pt">Über FREDDY</div><div class="ps">Music Intelligence System — alle Engines</div><div class="mgrid">';
+  engines.forEach(function(e){
+    html+='<div style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);padding:12px">'+
+      '<i class="ti '+e.icon+'" style="font-size:20px;color:'+e.c+'"></i>'+
+      '<p style="font-weight:600;font-size:13px;margin:6px 0 2px;color:var(--text)">'+e.n+'</p>'+
+      '<p style="font-size:11px;color:var(--text3)">'+e.d+'</p>'+
+      '<span class="badge" style="margin-top:6px;background:var(--bg2);color:var(--text2)">'+e.v+'</span></div>';
+  });
+  el.innerHTML=html+'</div>';
+}
+
+/* ── Detail Panel ────────────────────────────────── */
+function showNode(nodeId){
+  apiGet('/api/node/'+nodeId).then(function(data){
+    if(!data)return;
+    var html='<div class="dph"><div>'+
+      '<p style="font-size:11px;color:var(--text3);margin-bottom:3px">'+escH(data.node_type_id||'')+'</p>'+
+      '<p style="font-size:15px;font-weight:600;color:var(--text)">'+escH(data.name_display||data.name)+'</p>';
+    if(data.name_display&&data.name_display!==data.name)html+='<p style="font-size:11px;color:var(--text3)">'+escH(data.name)+'</p>';
+    html+='</div><i class="ti ti-x dpc" onclick="closeDP()"></i></div>';
+    if(data.short_description)html+='<div class="dps"><h3>'+t('dpSum')+'</h3><p>'+escH(data.short_description)+'</p></div>';
+    if(data.modules&&data.modules.length){
+      html+='<div class="dps"><h3>'+t('dpMods')+'</h3>';
+      data.modules.forEach(function(m){html+=badge(m.module_id,'var(--purple)','var(--purple-bg)')+' ';});
+      html+='</div>';
+    }
+    if(data.chains&&data.chains.length){
+      html+='<div class="dps"><h3>'+t('dpChains')+' ('+data.chains.length+')</h3>';
+      data.chains.forEach(function(c){
+        html+='<div class="crow" onclick="showChain(\''+escH(c.chain_id)+'\')" style="padding:7px 9px;margin-bottom:4px">'+
+          '<div class="ct" style="font-size:12px">'+escH(c.title)+'</div>'+
+          '<div class="cb" style="margin-top:4px">'+evBadge(c.evidence_level)+'</div></div>';
+      });
+      html+='</div>';
+    }
+    if(data.aliases&&data.aliases.length){
+      html+='<div class="dps"><h3>'+t('dpAli')+'</h3>';
+      data.aliases.forEach(function(a){
+        html+=badge(a.language.toUpperCase()+': '+a.alias,'var(--blue)','var(--blue-bg)')+' ';
+      });
+      html+='</div>';
+    }
+    document.getElementById('dpcnt').innerHTML=html;
+    document.getElementById('dp').classList.add('open');
+  });
+}
+
+function showChain(chainId){
+  apiGet('/api/chain/'+chainId).then(function(data){
+    if(!data)return;
+    var html='<div class="dph"><div>'+
+      '<p style="font-size:11px;color:var(--text3);margin-bottom:3px">'+escH(chainId)+'</p>'+
+      '<p style="font-size:14px;font-weight:600;line-height:1.3;color:var(--text)">'+escH(data.title)+'</p>'+
+      '</div><i class="ti ti-x dpc" onclick="closeDP()"></i></div>';
+    html+='<div class="dps"><h3>'+t('dpCause')+'</h3><p>'+escH(data.cause_name)+'</p></div>';
+    if(data.context_name)html+='<div class="dps"><h3>'+t('dpCtx')+'</h3><p>'+escH(data.context_name)+'</p></div>';
+    html+='<div class="dps"><h3>'+t('dpSum')+'</h3><p>'+escH(data.summary)+'</p></div>';
+    html+='<div class="dps">'+evBadge(data.evidence_level)+' '+cfBadge(data.confidence_level)+'</div>';
+    if(data.sources&&data.sources.length){
+      html+='<div class="dps"><h3>'+t('dpSrc')+' ('+data.sources.length+')</h3>';
+      data.sources.forEach(function(s){
+        html+='<div class="sri2"><div class="st">'+escH(s.title)+'</div>'+
+          '<div class="sm">'+escH(s.author_or_org||'')+(s.publication_year?' ('+s.publication_year+')':'')+' · '+escH(s.support_role||'')+'</div></div>';
+      });
+      html+='</div>';
+    }
+    document.getElementById('dpcnt').innerHTML=html;
+    document.getElementById('dp').classList.add('open');
+  });
+}
+function closeDP(){document.getElementById('dp').classList.remove('open');}
+
+/* ── Search ──────────────────────────────────────── */
+var stimer=null;
+document.getElementById('sinput').addEventListener('input',function(){
+  clearTimeout(stimer);var q=this.value.trim();
+  if(q.length<2){closeSrch();return;}
+  stimer=setTimeout(function(){doSearch(q);},300);
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSrch();});
+function doSearch(q){
+  apiGet('/api/search?q='+encodeURIComponent(q)).then(function(data){
+    if(!data)return;
+    var nodes=data.nodes||[],chains=data.chains||[];
+    var html=nodes.length===0&&chains.length===0?
+      '<div class="shdr">'+t('srchNone')+': "'+escH(q)+'"</div>' :
+      '<div class="shdr">'+nodes.length+' Nodes · '+chains.length+' Chains für „'+escH(q)+'"</div>';
+    nodes.forEach(function(n){
+      html+='<div class="srow" onclick="showNode(\''+escH(n.node_id)+'\');closeSrch()">'+
+        '<i class="ti ti-circle-dot" style="color:var(--blue);font-size:16px"></i>'+
+        '<div><div class="srn">'+escH(n.name_display||n.name)+'</div>'+
+        '<div class="srs">'+escH(n.type_label||'')+'</div></div>'+
+        cfBadge(n.confidence_level)+'</div>';
+    });
+    chains.forEach(function(c){
+      html+='<div class="srow" onclick="showChain(\''+escH(c.chain_id)+'\');closeSrch()">'+
+        '<i class="ti ti-arrow-right-circle" style="color:var(--purple);font-size:16px"></i>'+
+        '<div><div class="srn">'+escH(c.title)+'</div>'+
+        '<div class="srs">'+t('cause')+' '+escH(c.cause_name)+'</div></div></div>';
+    });
+    document.getElementById('sbox').innerHTML=html;
+    document.getElementById('sovl').classList.add('show');
+  });
+}
+function closeSrch(){document.getElementById('sovl').classList.remove('show');document.getElementById('sinput').value='';}
+
+/* ══════════════════════════════════════════════════
+   FREDDY MIDI PLAYER — Piano Synthesizer + Bottom Bar
+   ══════════════════════════════════════════════════ */
+var _ac=null,_playing=false,_timers=[],_startTime=0,_pauseAt=0;
+var _curStem=null,_curNotes=[],_curDur=0,_curIdx=-1;
+var _progInt=null,_activeKeys={};
+var _songQueue=[];  // wird von renderMidi befüllt
+
+/* ── Frequenz ──────────────────────────────────── */
+function freq(pitch){return 440*Math.pow(2,(pitch-69)/12);}
+
+/* ── Piano-Synthesizer (ADSR + Detuning + Filter) ─ */
+function pianoNote(ac,pitch,velocity,t0,dur){
+  var vol=Math.max(0.001,Math.min(0.18,(velocity/127)*0.18));
+  var f=freq(pitch);
+  var isBass=pitch<52;
+
+  // Master gain
+  var mg=ac.createGain();
+  mg.connect(ac.destination);
+
+  // ADSR
+  var atk=0.004, dcy=isBass?0.3:0.15, sus=isBass?0.5:0.35, rel=isBass?0.6:0.4;
+  mg.gain.setValueAtTime(0,t0);
+  mg.gain.linearRampToValueAtTime(vol,t0+atk);
+  mg.gain.exponentialRampToValueAtTime(vol*sus,t0+atk+dcy);
+  mg.gain.setValueAtTime(vol*sus,t0+dur);
+  mg.gain.exponentialRampToValueAtTime(0.0001,t0+dur+rel);
+
+  // Low-pass Filter (Wärme)
+  var lp=ac.createBiquadFilter();
+  lp.type='lowpass';
+  lp.frequency.value=Math.min(8000,1800+pitch*30);
+  lp.Q.value=0.4;
+  lp.connect(mg);
+
+  // 3 leicht verstimmte Oszillatoren (Fülle)
+  var detunes=[-2,0,2];
+  var types=isBass?['sawtooth','sawtooth','square']:['triangle','triangle','sine'];
+  detunes.forEach(function(d,i){
+    var osc=ac.createOscillator();
+    osc.type=types[i];
+    osc.frequency.value=f;
+    osc.detune.value=d;
+    osc.connect(lp);
+    osc.start(t0);
+    osc.stop(t0+dur+rel+0.05);
+  });
+}
+
+/* ── Stop ──────────────────────────────────────── */
+function bpStop(){
+  _timers.forEach(function(t){clearTimeout(t);});
+  _timers=[];
+  clearInterval(_progInt);_progInt=null;
+  if(_ac){try{_ac.close();}catch(e){}}
+  _ac=null;_playing=false;_activeKeys={};
+  var btn=document.getElementById('bp-play');
+  if(btn)btn.innerHTML='<i class="ti ti-player-play"></i>';
+  var pf=document.getElementById('bp-pf');if(pf)pf.style.width='0%';
+  document.getElementById('bp-keys').innerHTML='';
+}
+
+/* ── Track-Muting State ────────────────────────── */
+var _mutedTracks={};  // track_name -> bool
+
+function bpSetMute(trackName,muted){
+  _mutedTracks[trackName]=muted;
+  if(_playing&&_curNotes.length){
+    var at=_ac?_ac.currentTime-_startTime:0;
+    bpPlayNotes(_curNotes,_curStem,at);
+  }
+}
+
+function _buildTrackControls(tracks){
+  var el=document.getElementById('bp-tracks');
+  if(!el)return;
+  if(!tracks||!tracks.length){el.innerHTML='';return;}
+  el.innerHTML=tracks.map(function(t,i){
+    var isMel=i===0;
+    var col=isMel?'var(--purple)':'var(--text3)';
+    return '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:'+col+'">'
+      +'<span style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+t.name+'">'+t.name+'</span>'
+      +'<button onclick="bpToggleMute(\''+t.name.replace(/'/g,"\\'")+'\')" '
+      +'id="bpmt-'+i+'" style="font-size:10px;padding:1px 6px;border-radius:4px;border:.5px solid var(--border2);'
+      +'background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit">Stumm</button>'
+      +'</div>';
+  }).join('');
+}
+
+function bpToggleMute(trackName){
+  _mutedTracks[trackName]=!_mutedTracks[trackName];
+  // Button-Stil aktualisieren
+  var tracks=_curData&&_curData.tracks||[];
+  tracks.forEach(function(t,i){
+    var btn=document.getElementById('bpmt-'+i);
+    if(btn&&t.name===trackName){
+      btn.style.background=_mutedTracks[trackName]?'var(--purple)':'var(--bg2)';
+      btn.style.color=_mutedTracks[trackName]?'#fff':'var(--text2)';
+    }
+  });
+  if(_playing){
+    var at=_ac?_ac.currentTime-_startTime:0;
+    _timers.forEach(clearTimeout);_timers=[];
+    _scheduleNotes(_curNotes,at);
+  }
+}
+
+var _curData=null;
+
+/* ── Spiele Noten ab ───────────────────────────── */
+function _scheduleNotes(notes,startAt){
+  // Max 800 Noten gleichzeitig schedulen um AudioContext nicht zu ueberlasten
+  var MAX_NODES=800;
+  var visible=notes.filter(function(n){
+    return n.start>=startAt&&!_mutedTracks[n.track];
+  });
+  // Bei zu vielen: bevorzuge Noten die bald kommen
+  if(visible.length>MAX_NODES){
+    visible=visible.sort(function(a,b){return a.start-b.start;}).slice(0,MAX_NODES);
+  }
+  visible.forEach(function(n){
+    var relStart=n.start-startAt;
+    var t0=_ac.currentTime+Math.max(0,relStart);
+    pianoNote(_ac,n.pitch,n.velocity,t0,Math.min(n.duration,2.0));
+    var t1=setTimeout(function(){_activeKeys[n.pitch]=true;_bpKeyUpdate();},Math.max(0,relStart)*1000);
+    var t2=setTimeout(function(){_activeKeys[n.pitch]=false;_bpKeyUpdate();},(relStart+Math.min(n.duration,2.0))*1000);
+    _timers.push(t1,t2);
+  });
+  // Wenn es mehr Noten gibt: Nachladen kurz vor Ende des aktuellen Fensters
+  if(visible.length>=MAX_NODES&&notes.filter(function(n){return n.start>=startAt;}).length>MAX_NODES){
+    var lastTime=visible[visible.length-1].start-startAt;
+    var reloadAt=Math.max(0,lastTime-5)*1000;
+    var tid=setTimeout(function(){
+      if(!_playing)return;
+      var newAt=_ac.currentTime-_startTime;
+      _scheduleNotes(notes,newAt);
+    },reloadAt);
+    _timers.push(tid);
+  }
+}
+
+function bpPlayNotes(notes,stem,startAt){
+  bpStop();
+  if(!notes||!notes.length)return;
+  startAt=startAt||0;
+  _curStem=stem;_curNotes=notes;
+  _curDur=notes.reduce(function(m,n){return Math.max(m,n.start+n.duration);},0)+0.5;
+  _ac=new(window.AudioContext||window.webkitAudioContext)();
+  _playing=true;
+  _startTime=_ac.currentTime-startAt;
+
+  // Piano-Keys vorbereiten
+  var pitches=Array.from(new Set(notes.map(function(n){return n.pitch;}))).sort(function(a,b){return a-b;});
+  var keysEl=document.getElementById('bp-keys');
+  if(keysEl){
+    keysEl.innerHTML=pitches.slice(0,40).map(function(p){
+      var isBlack=['C#','D#','F#','G#','A#'].indexOf(['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][p%12])>=0;
+      return '<div class="bp-key" id="bpk-'+p+'" style="background:'+(isBlack?'var(--text2)':'var(--bg2)')+'"></div>';
+    }).join('');
+  }
+
+  var btn=document.getElementById('bp-play');
+  if(btn)btn.innerHTML='<i class="ti ti-player-pause"></i>';
+
+  // Noten mit Limit schedulen
+  _scheduleNotes(notes,startAt);
+
+  // Progress
+  _progInt=setInterval(function(){
+    if(!_playing||!_ac){clearInterval(_progInt);return;}
+    var el=_ac.currentTime-_startTime;
+    var pf=document.getElementById('bp-pf');
+    if(pf&&_curDur>0)pf.style.width=Math.min(100,(el/_curDur*100)).toFixed(1)+'%';
+    var pt=document.getElementById('bp-time');
+    if(pt)pt.textContent=_pad(el)+' / '+_pad(_curDur);
+    if(el>=_curDur){clearInterval(_progInt);_playing=false;
+      var btn2=document.getElementById('bp-play');
+      if(btn2)btn2.innerHTML='<i class="ti ti-player-play"></i>';
+      setTimeout(bpNext,500);}
+  },80);
+}
+
+function _bpKeyUpdate(){
+  Object.keys(_activeKeys).forEach(function(k){
+    var el=document.getElementById('bpk-'+k);
+    if(el)el.classList.toggle('on',!!_activeKeys[k]);
+  });
+}
+
+function _pad(s){var m=Math.floor(s/60),x=Math.floor(s%60);return m+':'+(x<10?'0':'')+x;}
+
+/* ── Lade Song in Player ───────────────────────── */
+function bpLoad(stem,autoplay){
+  fetch(API+'/api/songs/'+encodeURIComponent(stem)+'/playback')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data||data.error||!data.notes||!data.notes.length){
+        var m=document.getElementById('bp-meta');
+        if(m)m.textContent=data&&data.error?data.error:'Keine Noten gefunden';
+        return;
+      }
+      _curData=data;_mutedTracks={};
+      _curStem=stem;_curNotes=data.notes;_curDur=data.total_duration||0;_pauseAt=0;
+      var t=document.getElementById('bp-title');
+      if(t)t.textContent=stem.replace(/_/g,' ');
+      var m=document.getElementById('bp-meta');
+      if(m)m.textContent=(data.note_count||0)+' Noten · '+(data.bpm||'—')+' BPM · '+(data.time_signature||'4/4');
+      var bp=document.getElementById('bottom-player');
+      if(bp)bp.classList.add('visible');
+      _buildTrackControls(data.tracks||[]);
+      // Song-Card-Meta aktualisieren
+      var pm=document.getElementById('pmeta-'+stem);
+      if(pm)pm.textContent=(data.note_count||0)+' Noten · '+(data.bpm||'—')+' BPM';
+      if(autoplay)bpPlayNotes(data.notes,stem,0);
+    })
+    .catch(function(){});
+}
+
+/* ── Controls ──────────────────────────────────── */
+function bpToggle(){
+  if(_playing){
+    _pauseAt=_ac?_ac.currentTime-_startTime:0;
+    bpStop();
+  } else if(_curNotes.length){
+    bpPlayNotes(_curNotes,_curStem,_pauseAt);
+  }
+}
+function bpSeek(el,ev){
+  if(!_curNotes.length)return;
+  var rect=el.getBoundingClientRect();
+  var pct=(ev.clientX-rect.left)/rect.width;
+  bpPlayNotes(_curNotes,_curStem,pct*_curDur);
+}
+function bpNext(){
+  if(!_songQueue.length)return;
+  _curIdx=(_curIdx+1)%_songQueue.length;
+  bpLoad(_songQueue[_curIdx],true);
+}
+function bpPrev(){
+  if(!_songQueue.length)return;
+  _curIdx=(_curIdx-1+_songQueue.length)%_songQueue.length;
+  bpLoad(_songQueue[_curIdx],true);
+}
+
+/* ── seekPlayer: Fortschrittsklick in Song-Card ── */
+function seekPlayer(el,ev,stem){
+  // Leitet ans Bottom-Player weiter
+  if(_curStem===stem && _curNotes.length){
+    bpSeek(el,ev);
+  }
+}
+
+/* ── Song-Card Play-Button (leitet an Bottom-Player weiter) ── */
+function togglePlayer(stem){
+  if(_playing&&_curStem===stem){bpToggle();return;}
+  bpStop();
+  _curIdx=_songQueue.indexOf(stem);
+  bpLoad(stem,true);
+  // Button-Feedback auf Karte
+  var btn=document.getElementById('pbtn-'+stem);
+  if(btn){btn.innerHTML='<i class="ti ti-loader"></i>';}
+  setTimeout(function(){
+    var btn2=document.getElementById('pbtn-'+stem);
+    if(btn2)btn2.innerHTML='<i class="ti ti-player-play"></i>';
+  },800);
+}
+
+/* ── Init ────────────────────────────────────────── */
+applyI18n();
+loadPage('dashboard');
+</script>
+</body>
+</html>
