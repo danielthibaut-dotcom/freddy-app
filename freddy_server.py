@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 FREDDY Server v2.0 - Pure Python, zero dependencies
 Alle Engine-Definitionen VOR if __name__ == "__main__"
@@ -82,7 +83,7 @@ MUSESCORE_CANDIDATES = [
 ]
 MUSESCORE_EXE = next((p for p in MUSESCORE_CANDIDATES if p.exists()), None)
 MUSESCORE_OK  = MUSESCORE_EXE is not None
-print(f"[FREDDY] MuseScore 4 : {'OK → ' + str(MUSESCORE_EXE) if MUSESCORE_OK else 'nicht gefunden (Fallback: FREDDYnote)'}")
+print(f"[FREDDY] MuseScore 4 : {'OK: ' + str(MUSESCORE_EXE) if MUSESCORE_OK else 'nicht gefunden (Fallback: FREDDYnote)'}")
 
 # Engine 3: FREDDYtext
 sys.path.insert(0, str(ENGINES / "freddytext"))
