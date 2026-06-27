@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+data/songs/*/midi/
+data/songs/*/notation/
+data/songs/*/primus/
+data/_notation_tmp/
+data/FREDDY_DB.sqlite
+*.zip
+*.log

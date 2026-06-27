@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FREDDY Noten</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#534AB7;--purple-bg:#EEEDFE;--purple-border:rgba(83,74,183,.3);
+  --green:#3B6D11;--green-bg:#EAF3DE;
+  --red:#993C1D;--red-bg:#FAECE7;
+  --bg:#FAFAF8;--bg2:#F1EFE8;--bg3:#fff;
+  --border:rgba(0,0,0,.1);--text:#1A1A18;--text2:#5F5E5A;--text3:#9E9C96;
+  --r:10px;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;padding:40px 20px;
+}
+header{text-align:center;margin-bottom:40px}
+header h1{font-size:32px;font-weight:700;color:var(--purple);letter-spacing:-.5px}
+header p{color:var(--text2);margin-top:6px;font-size:15px}
+
+.card{
+  background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);
+  padding:28px;width:100%;max-width:560px;margin-bottom:24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.card h2{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:16px}
+
+/* Drop-Zone */
+#drop{
+  border:2px dashed var(--purple-border);border-radius:var(--r);
+  background:var(--purple-bg);padding:40px 20px;text-align:center;
+  cursor:pointer;transition:all .15s;
+}
+#drop:hover,#drop.over{border-color:var(--purple);background:#E5E3FD}
+#drop .icon{font-size:40px;margin-bottom:10px}
+#drop p{color:var(--text2);font-size:14px}
+#drop strong{color:var(--purple)}
+#file-input{display:none}
+
+/* Spurauswahl */
+#track-section{display:none}
+.track-opts{display:flex;flex-direction:column;gap:8px}
+.track-opt{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border:.5px solid var(--border);border-radius:8px;cursor:pointer;
+  background:var(--bg);transition:background .1s;
+}
+.track-opt:hover{background:var(--bg2)}
+.track-opt input[type=checkbox]{width:16px;height:16px;accent-color:var(--purple);cursor:pointer}
+.track-opt label{cursor:pointer;font-size:14px;flex:1}
+.track-opt .badge{
+  font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;
+  background:var(--purple-bg);color:var(--purple);
+}
+.track-opt.melody label{font-weight:600;color:var(--purple)}
+
+#btn-convert{
+  width:100%;padding:13px;background:var(--purple);color:#fff;
+  border:none;border-radius:var(--r);font-size:15px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;margin-top:16px;font-family:inherit;
+}
+#btn-convert:hover{opacity:.88}
+#btn-convert:disabled{opacity:.4;cursor:default}
+
+/* Status */
+#status{display:none;padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px}
+#status.loading{background:var(--purple-bg);color:var(--purple)}
+#status.ok{background:var(--green-bg);color:var(--green)}
+#status.err{background:var(--red-bg);color:var(--red)}
+
+/* Ergebnisse */
+#results{display:none}
+.pdf-list{display:flex;flex-direction:column;gap:8px}
+.pdf-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border:.5px solid var(--border);border-radius:8px;background:var(--bg);
+}
+.pdf-item span{font-size:14px;color:var(--text)}
+.pdf-item a{
+  background:var(--purple);color:#fff;padding:6px 14px;border-radius:6px;
+  text-decoration:none;font-size:13px;font-weight:500;
+}
+.pdf-item a:hover{opacity:.85}
+
+.info-row{display:flex;gap:12px;font-size:12px;color:var(--text3);margin-top:8px}
+footer{margin-top:auto;padding-top:40px;font-size:12px;color:var(--text3);text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎵 FREDDY Noten</h1>
+  <p>MIDI-Datei hochladen — jede Stimme als eigenes Notenblatt</p>
+</header>
+
+<!-- Schritt 1: Upload -->
+<div class="card">
+  <h2>Schritt 1 — MIDI-Datei auswählen</h2>
+  <div id="drop" onclick="document.getElementById('file-input').click()">
+    <div class="icon">🎼</div>
+    <p>Datei hierher ziehen<br>oder <strong>hier klicken</strong> zum Auswählen</p>
+  </div>
+  <input type="file" id="file-input" accept=".mid,.midi">
+</div>
+
+<!-- Schritt 2: Spurauswahl & Starten -->
+<div class="card" id="track-section">
+  <h2>Schritt 2 — Stimmen auswählen</h2>
+  <div class="track-opts" id="track-list"></div>
+  <div id="status"></div>
+  <button id="btn-convert" disabled>⏳ Lade Datei...</button>
+</div>
+
+<!-- Ergebnisse -->
+<div class="card" id="results">
+  <h2>Fertig — Notenblätter herunterladen</h2>
+  <div class="pdf-list" id="pdf-list"></div>
+  <div class="info-row" id="info-row"></div>
+</div>
+
+<footer>FREDDY Music Intelligence System &nbsp;·&nbsp; Für Freddy ❤️</footer>
+
+<script>
+const API = 'http://localhost:7432';
+let currentStem = null;
+
+// Drag & Drop
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  drop.classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+async function handleFile(file) {
+  if (!file.name.match(/\.(mid|midi)$/i)) {
+    alert('Bitte eine MIDI-Datei (.mid) auswählen.');
+    return;
+  }
+  drop.querySelector('p').innerHTML = `<strong>${file.name}</strong> wird hochgeladen…`;
+  setStatus('loading', 'Datei wird verarbeitet…');
+  document.getElementById('track-section').style.display = 'block';
+  document.getElementById('btn-convert').disabled = true;
+  document.getElementById('results').style.display = 'none';
+
+  const form = new FormData();
+  form.append('file', file, file.name);
+
+  try {
+    const res = await fetch(`${API}/api/midi/upload`, { method: 'POST', body: buildMultipart(file, await file.arrayBuffer()) });
+    const data = await res.json();
+    const song = Array.isArray(data) ? data[0] : data;
+    if (song.error) throw new Error(song.error);
+    currentStem = song.stem;
+
+    // Spurliste aufbauen (aus track_names oder Channels)
+    buildTrackList(song);
+    drop.querySelector('p').innerHTML = `✅ <strong>${file.name}</strong> geladen (${song.note_count || '?'} Noten, ${song.bpm || '?'} BPM)`;
+    hideStatus();
+    document.getElementById('btn-convert').disabled = false;
+    document.getElementById('btn-convert').textContent = '🎼 Notenblätter erstellen';
+  } catch(err) {
+    setStatus('err', 'Fehler: ' + err.message);
+    drop.querySelector('p').innerHTML = 'Datei hierher ziehen oder <strong>hier klicken</strong>';
+  }
+}
+
+function buildMultipart(file, buffer) {
+  const boundary = '----FreddyBoundary' + Date.now();
+  const enc = new TextEncoder();
+  const header = enc.encode(
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${file.name}"\r\nContent-Type: audio/midi\r\n\r\n`
+  );
+  const footer = enc.encode(`\r\n--${boundary}--\r\n`);
+  const blob = new Blob([header, buffer, footer]);
+  return new Request(`${API}/api/midi/upload`, {
+    method: 'POST',
+    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+    body: blob,
+  }).body || blob;
+}
+
+function buildTrackList(song) {
+  const list = document.getElementById('track-list');
+  list.innerHTML = '';
+  const names = song.track_names || [];
+  const tracks = song.tracks || song.format !== undefined ? (names.length > 0 ? names : ['Alle Stimmen']) : ['Alle Stimmen'];
+
+  // Füge immer "Alle Stimmen einzeln" Option hinzu
+  const allOpt = makeTrackOpt('all', '🎵 Alle Stimmen (je eine PDF)', true, true);
+  list.appendChild(allOpt);
+
+  if (names.length > 0) {
+    names.forEach((name, i) => {
+      if (name && !name.toLowerCase().includes('drum') && !name.toLowerCase().includes('perc')) {
+        list.appendChild(makeTrackOpt(i, `Spur ${i}: ${name}`, false, false));
+      }
+    });
+  }
+}
+
+function makeTrackOpt(val, label, checked, isMelody) {
+  const div = document.createElement('div');
+  div.className = 'track-opt' + (isMelody ? ' melody' : '');
+  div.innerHTML = `
+    <input type="checkbox" id="tr_${val}" value="${val}" ${checked ? 'checked' : ''}>
+    <label for="tr_${val}">${label}</label>
+    ${isMelody ? '<span class="badge">Empfohlen</span>' : ''}
+  `;
+  return div;
+}
+
+document.getElementById('btn-convert').addEventListener('click', async () => {
+  if (!currentStem) return;
+  setStatus('loading', '⏳ Notenblätter werden erstellt… Das kann einen Moment dauern.');
+  document.getElementById('btn-convert').disabled = true;
+  document.getElementById('results').style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/api/midi/convert-note`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stems: [currentStem] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // PDFs aus Song-Status holen
+    const songs = data.songs || [];
+    const song = songs.find(s => s.stem === currentStem);
+    showResults(song, data);
+    setStatus('ok', '✅ Fertig! Die Notenblätter sind bereit.');
+  } catch(err) {
+    setStatus('err', 'Fehler: ' + err.message);
+  } finally {
+    document.getElementById('btn-convert').disabled = false;
+    document.getElementById('btn-convert').textContent = '🔄 Nochmal erstellen';
+  }
+});
+
+function showResults(song, data) {
+  const section = document.getElementById('results');
+  const list = document.getElementById('pdf-list');
+  list.innerHTML = '';
+  section.style.display = 'block';
+
+  const files = song ? song.files : {};
+  let found = false;
+  for (const [name, url] of Object.entries(files)) {
+    if (name.endsWith('.pdf') || name === 'score.pdf') {
+      const item = document.createElement('div');
+      item.className = 'pdf-item';
+      const label = name.includes('Melodie') ? '🎵 Melodie' :
+                    name.includes('Spur') ? name.replace('_score.pdf','').replace(/_/g,' ') :
+                    '📄 Notenblatt';
+      item.innerHTML = `<span>${label}</span><a href="${API}${url}" target="_blank" download>⬇ Herunterladen</a>`;
+      list.appendChild(item);
+      found = true;
+    }
+  }
+  if (!found) {
+    list.innerHTML = '<p style="color:var(--text2);font-size:13px">Keine PDFs gefunden. Versuche es nochmal.</p>';
+  }
+
+  const info = document.getElementById('info-row');
+  const converted = data.converted || [];
+  info.textContent = converted.length ? `Erstellt: ${converted.join(', ')}` : '';
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.style.display = 'block';
+  el.className = type;
+  el.textContent = msg;
+}
+function hideStatus() {
+  document.getElementById('status').style.display = 'none';
+}
+</script>
+</body>
+</html>
